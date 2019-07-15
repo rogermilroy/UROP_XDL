@@ -1,4 +1,3 @@
-from peewee import *
 from playhouse.postgres_ext import *
 
 
@@ -8,8 +7,9 @@ class BaseModel(Model):
     """
     class Meta:  # TODO make configurable so we are not storing sensitive info in source code.
         database = PostgresqlExtDatabase(
-            database="something",
-            host="something",
-            password="something"
+            "test_postgres",
+            host="localhost",
+            user="postgres",
+            password="pa55w0rd"
         )
         legacy_table_names = False

@@ -1,6 +1,6 @@
 from playhouse.postgres_ext import *
 from database.base_model import BaseModel
-from training_run import TrainingRun
+from database.training_run import TrainingRun
 
 
 class TrainingData(BaseModel):
@@ -8,6 +8,7 @@ class TrainingData(BaseModel):
     epoch_number = IntegerField()
     epoch_minibatch_number = IntegerField()
     total_minibatch_number = IntegerField()
-    inputs = BinaryJSONField()
+    inputs = BlobField()
     model_state = BinaryJSONField()
     outputs = BlobField()
+    targets = BlobField()
