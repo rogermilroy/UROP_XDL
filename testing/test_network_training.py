@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from torch import optim
 from torch.nn import functional
+from tqdm import tqdm
 from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet
 
@@ -105,11 +106,11 @@ def main():
 
         # Get the next minibatch of images, labels for training
         torch.cuda.empty_cache()
-        for minibatch_count, (images, labels) in enumerate(train_loader, 0):
+        for minibatch_count, (images, labels) in tqdm(enumerate(train_loader, 0)):
 
             # Flatten images
             images = torch.reshape(images, (batch_size, -1))
-            print(images.shape)
+            # print(images.shape)
 
             # Put the minibatch data in CUDA Tensors and run on the GPU if supported
             images, labels = images.to(computing_device), labels.to(computing_device)
@@ -125,13 +126,13 @@ def main():
             loss.backward()
 
             soft_out = functional.softmax(outputs, dim=1)
-            print(soft_out.shape)
+            # print(soft_out.shape)
 
             db.save_training_data(epoch=epoch+1, epoch_minibatch=minibatch_count+1,
                                   tot_minibatch=(epoch+1)*(minibatch_count+1),
-                                  inputs=images.numpy(),
-                                  model_state=model.state_dict(), outputs=soft_out.detach().numpy(),
-                                  targets=labels.numpy())
+                                  inputs=images,
+                                  model_state=model.state_dict(), outputs=soft_out,
+                                  targets=labels)
 
             # Update the weights
             optimizer.step()

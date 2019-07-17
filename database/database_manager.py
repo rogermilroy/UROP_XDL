@@ -2,24 +2,16 @@ from database.training_run import TrainingRun
 from database.training_data import TrainingData
 from io import BytesIO
 import numpy as np
-from torch import Tensor
+from utils.tensor_processing import *
 
 
-class DatabaseManager:
+class DatabaseManager(object):
     """
     Class to wrap database interactions.
     """
     def __init__(self, db):
         self.db = db
         self.training_run = None
-
-    def process_model_state(self, model_state):
-        # with BytesIO() as b:
-        for key, value in model_state.items():
-            if isinstance(value, Tensor):
-                    # np.save(b, value.numpy())
-                model_state[key] = str(value.numpy())
-        return model_state
 
     def create_database(self):
         self.db.connect()
@@ -36,20 +28,22 @@ class DatabaseManager:
 
     def save_training_data(self, epoch, epoch_minibatch, tot_minibatch, inputs,
                            model_state, outputs, targets):
-        with BytesIO() as b:
-            np.save(b, inputs)
-            ser_in = b.getvalue()
-            np.save(b, outputs)
-            ser_out = b.getvalue()
-            np.save(b, targets)
-            ser_tar = b.getvalue()
+        # with BytesIO() as b:
+        #     np.save(b, inputs)
+        #     ser_in = b.getvalue()
+        #     np.save(b, outputs)
+        #     ser_out = b.getvalue()
+        #     np.save(b, targets)
+        #     ser_tar = b.getvalue()
 
-        model_state = self.process_model_state(model_state)
+        model_state = encode_model_state(model_state)
 
         self.db.connect()
         new_data = TrainingData.create(training_run=self.training_run, epoch_number=epoch,
                                        epoch_minibatch_number=epoch_minibatch,
-                                       total_minibatch_number=tot_minibatch, inputs=ser_in,
-                                       model_state=model_state, outputs=ser_out, targets=ser_tar)
+                                       total_minibatch_number=tot_minibatch,
+                                       inputs=encode_tensor(inputs),
+                                       model_state=model_state, outputs=encode_tensor(outputs),
+                                       targets=encode_tensor(targets))
         new_data.save()
         self.db.close()
