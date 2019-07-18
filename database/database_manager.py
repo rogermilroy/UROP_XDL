@@ -35,6 +35,9 @@ class DatabaseManager(object):
         #     ser_out = b.getvalue()
         #     np.save(b, targets)
         #     ser_tar = b.getvalue()
+        inputs = encode_tensor(inputs)
+        outputs = encode_tensor(outputs)
+        targets = encode_tensor(targets)
 
         model_state = encode_model_state(model_state)
 
@@ -42,8 +45,8 @@ class DatabaseManager(object):
         new_data = TrainingData.create(training_run=self.training_run, epoch_number=epoch,
                                        epoch_minibatch_number=epoch_minibatch,
                                        total_minibatch_number=tot_minibatch,
-                                       inputs=encode_tensor(inputs),
-                                       model_state=model_state, outputs=encode_tensor(outputs),
-                                       targets=encode_tensor(targets))
+                                       inputs=inputs,
+                                       model_state=model_state, outputs=outputs,
+                                       targets=targets)
         new_data.save()
         self.db.close()
