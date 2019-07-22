@@ -94,6 +94,19 @@ def data_to_json(epoch, epoch_minibatch, total_minibatch, inputs, model_state, o
 
 def metadata_to_json(model_name, training_run_number, epochs, batch_size, cuda, model, criterion,
                      optimizer, metadata):
+    """
+    Converts metadata to json.
+    :param model_name: str The name of the model
+    :param training_run_number: int The number of the training run.
+    :param epochs: int The number of epochs to be run. (Full runs through the dataset)
+    :param batch_size: int The number of samples per minibatch.
+    :param cuda: bool Whether the training is on a CUDA GPU
+    :param model: torch.Module The model being trained.
+    :param criterion: torch.nn.Criterion The loss criterion.
+    :param optimizer: torch.optim.Optimizer The optimisation algorithm used.
+    :param metadata: dict Any other metadata to be stored.
+    :return: JSON encoded dict.
+    """
     mdata = dict()
     mdata['model_name'] = model_name
     mdata['training_run_number'] = training_run_number
