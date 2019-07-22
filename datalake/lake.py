@@ -1,0 +1,1 @@
+# coordinator of multiple processes that will take json data and store it temporarily.

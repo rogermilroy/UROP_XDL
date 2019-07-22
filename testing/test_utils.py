@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from utils.tensor_processing import encode_tensor, decode_tensor
+from utils.data_processing import encode_tensor, decode_tensor
 import unittest
 test_tens = None
 

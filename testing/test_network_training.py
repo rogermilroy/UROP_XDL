@@ -11,7 +11,7 @@ from database.database_manager import DatabaseManager
 from playhouse.postgres_ext import PostgresqlExtDatabase
 
 # extractor imports
-from nn_data_extractor import NNDataExtractor
+from extraction.nn_data_extractor import NNDataExtractor
 
 
 # Validation testing function
@@ -43,7 +43,6 @@ def main():
         ))
     extractor = NNDataExtractor()
     db.create_database()
-
 
     num_epochs = 50  # Number of full passes through the dataset
     early_stop_epochs = 5
@@ -90,11 +89,9 @@ def main():
     best_params = None
 
     # Save metadata about the training run.
-    metadata = {"epochs": num_epochs, "early_stop_epochs": early_stop_epochs, "batch_size":
-                batch_size, "seed": seed, "use_cuda": use_cuda, "model": str(model), "criterion":
-                str(criterion), "optimizer": str(optimizer)}
+    metadata = {"early_stop_epochs": early_stop_epochs, "seed": seed}
 
-    db.save_metadata("test_network", 1, metadata)
+    extractor.metadata_to_json("test_network", 1 , num_epochs, batch_size, use_cuda, model, criterion, optimizer, metadata)
 
     # Begin training procedure
     for epoch in range(num_epochs):
@@ -177,7 +174,6 @@ def main():
     # test
     total_test_loss, avg_test_loss = test(model, computing_device, test_loader, criterion)
     print(total_test_loss, avg_test_loss)
-
 
 if __name__ == '__main__':
     main()

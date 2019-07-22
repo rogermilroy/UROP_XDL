@@ -2,7 +2,7 @@ from database.training_run import TrainingRun
 from database.training_data import TrainingData
 from io import BytesIO
 import numpy as np
-from utils.tensor_processing import *
+from utils.data_processing import *
 
 
 class DatabaseManager(object):
