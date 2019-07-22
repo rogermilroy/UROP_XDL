@@ -38,6 +38,19 @@ class NNDataExtractor:
 
     def extract_metadata(self, model_name, training_run_number, epochs, batch_size, cuda, model,
                          criterion, optimizer, metadata):
+        """
+        Sends the metadata to the socket to be sent.
+        :param model_name: str The name of the model
+        :param training_run_number: int The number of the training run.
+        :param epochs: int The number of epochs to be run. (Full runs through the dataset)
+        :param batch_size: int The number of samples per minibatch.
+        :param cuda: bool Whether the training is on a CUDA GPU
+        :param model: torch.Module The model being trained.
+        :param criterion: torch.nn.Criterion The loss criterion.
+        :param optimizer: torch.optim.Optimizer The optimisation algorithm used.
+        :param metadata: dict Any other metadata to be stored.
+        :return: None
+        """
         self.send_json(metadata_to_json(model_name, training_run_number, epochs, batch_size,
                                         cuda, criterion, optimizer, metadata))
 
