@@ -34,15 +34,7 @@ def test(model, computing_device, loader, criterion):
 # Setup: initialize the hyper-parameters/variables
 def main():
 
-    # Set up database
-    db = DatabaseManager(PostgresqlExtDatabase(
-            "test_postgres",
-            host="localhost",
-            user="postgres",
-            password="pa55w0rd"
-        ))
     extractor = NNDataExtractor()
-    db.create_database()
 
     num_epochs = 50  # Number of full passes through the dataset
     early_stop_epochs = 5
@@ -91,7 +83,13 @@ def main():
     # Save metadata about the training run.
     metadata = {"early_stop_epochs": early_stop_epochs, "seed": seed}
 
-    extractor.metadata_to_json("test_network", 1 , num_epochs, batch_size, use_cuda, model, criterion, optimizer, metadata)
+    extractor.extract_metadata(model_name="test_network", training_run_number=1, epochs=num_epochs,
+                               batch_size=batch_size, cuda=use_cuda, model=model,
+                               criterion=criterion, optimizer=optimizer, metadata=metadata)
+
+    extractor.extract_data(epoch=0, epoch_minibatch=0,
+                           inputs=None, model_state=model.state_dict(),
+                           outputs=None, targets=None)
 
     # Begin training procedure
     for epoch in range(num_epochs):
@@ -125,11 +123,9 @@ def main():
             soft_out = functional.softmax(outputs, dim=1)
             # print(soft_out.shape)
 
-            db.save_training_data(epoch=epoch+1, epoch_minibatch=minibatch_count+1,
-                                  tot_minibatch=(epoch+1)*(minibatch_count+1),
-                                  inputs=images,
-                                  model_state=model.state_dict(), outputs=soft_out,
-                                  targets=labels)
+            extractor.extract_data(epoch=epoch+1, epoch_minibatch=minibatch_count+1,
+                                   inputs=images, model_state=model.state_dict(),
+                                   outputs=soft_out, targets=labels)
 
             # Update the weights
             optimizer.step()
@@ -174,6 +170,7 @@ def main():
     # test
     total_test_loss, avg_test_loss = test(model, computing_device, test_loader, criterion)
     print(total_test_loss, avg_test_loss)
+
 
 if __name__ == '__main__':
     main()

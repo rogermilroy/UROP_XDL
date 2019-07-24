@@ -36,6 +36,8 @@ def encode_tensor(tensor: Tensor) -> dict:
     :param tensor: Torch Tensor.
     :return: dict containing tensor data and metadata.
     """
+    if not isinstance(tensor, Tensor):
+        raise TypeError("Must be a Torch.Tensor.")
     t_dict = dict()
     t_dict["device"] = str(tensor.device)
     t_dict["dtype"] = str(tensor.dtype)
@@ -60,6 +62,8 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     :param tensor_dict: A dict constructed by encode_tensor.
     :return: Torch Tensor.
     """
+    if not isinstance(tensor_dict, dict):
+        raise TypeError("Must be a dict.")
     tens = torch.tensor(np.array(tensor_dict["data"])).to(tensor_dict["dtype"])
     if tensor_dict["device"] == str(torch.device("cuda")) and torch.cuda.is_available():
         tens = tens.to(tensor_dict["device"])
@@ -85,9 +89,10 @@ def data_to_json(epoch, epoch_minibatch, total_minibatch, inputs, model_state, o
     data['epoch_minibatch'] = epoch_minibatch
     data['total_minibatch'] = total_minibatch
     data['inputs'] = encode_tensor(inputs)
-    data['model_state'] = encode_model_state(model_state)
     data['outputs'] = encode_tensor(outputs)
     data['targets'] = encode_tensor(targets)
+
+    data['model_state'] = encode_model_state(model_state)
 
     return json.dumps(data)
 
