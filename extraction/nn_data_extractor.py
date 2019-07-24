@@ -3,7 +3,6 @@ from utils.data_processing import *
 import zmq
 
 
-
 class NNDataExtractor:
     """
     Extracts and sends NN data to Datalake.
@@ -18,6 +17,7 @@ class NNDataExtractor:
         self.port = 50005
         # currently only allowing tcp connection. May add more for flexibility later.
         self.socket.bind('tcp://' + str(self.ip) + ":" + str(self.port))
+        print(str(self.ip) + ":" + str(self.port))
         self.total_minibatch_number = 0
 
     def extract_data(self, epoch, epoch_minibatch, inputs, model_state, outputs, targets):
