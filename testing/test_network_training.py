@@ -7,11 +7,9 @@ from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet
 
 # Database imports, TODO remove when possible
-from database.database_manager import DatabaseManager
-from playhouse.postgres_ext import PostgresqlExtDatabase
 
 # extractor imports
-from extraction.nn_data_extractor import NNDataExtractor
+from extraction.extraction.nn_data_extractor import NNDataExtractor
 
 
 # Validation testing function

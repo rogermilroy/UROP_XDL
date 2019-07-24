@@ -1,6 +1,6 @@
 from playhouse.postgres_ext import *
-from database.base_model import BaseModel
-from database.training_run import TrainingRun
+from database.database.base_model import BaseModel
+from database.database.training_run import TrainingRun
 from io import BytesIO
 import numpy as np
 import torch
