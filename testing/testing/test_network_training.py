@@ -3,8 +3,8 @@ import numpy as np
 from torch import optim
 from torch.nn import functional
 from tqdm import tqdm
-from testing.test_dataloaders import create_split_loaders
-from testing.test_network import TestFeedforwardNet
+from testing.testing.test_dataloaders import create_split_loaders
+from testing.testing.test_network import TestFeedforwardNet
 
 # Database imports, TODO remove when possible
 
