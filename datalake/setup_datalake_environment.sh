@@ -23,7 +23,9 @@ git checkout implement-datalake
 
 cd datalake
 
-python3 setup.py install --user
+pip3 install --user -e .
+
+pip3 install --user -e ../utils
 
 
 # TODO install MongoDB and set up.

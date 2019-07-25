@@ -2,9 +2,7 @@ from setuptools import setup
 
 setup(
     name='utils',
-    packages=['utils',
-              'utils.data_processing',
-              'utils.network_details'],
+    packages=['utils'],
     include_package_data=True,
     install_requires=[
         'numpy>=1.14.5',

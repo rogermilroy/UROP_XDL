@@ -1,9 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='database',
-    packages=['extraction',
-              'extraction.nn_data_extractor'],
+    name='extraction',
+    packages=['extraction'],
     include_package_data=True,
     install_requires=[
         'numpy>=1.14.5',

@@ -22,4 +22,5 @@ git checkout implement-datalake
 
 cd extraction
 
-python3 setup.py install --user
+pip3 install --user -e .
+pip3 install --user -e ../utils

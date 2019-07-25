@@ -1,4 +1,4 @@
-from database.database.base_model import BaseModel
+from database.database.models.base_model import BaseModel
 from playhouse.postgres_ext import *
 
 

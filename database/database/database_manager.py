@@ -1,5 +1,5 @@
-from database.database.training_run import TrainingRun
-from database.database.training_data import TrainingData
+from database.database.models.training_run import TrainingRun
+from database.database.models.training_data import TrainingData
 from utils.utils.data_processing import *
 
 
