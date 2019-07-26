@@ -39,6 +39,5 @@ if __name__ == '__main__':
     parser.add_argument('address', help='The address of the server distributing the data.')
     parser.add_argument('processes', help='Number of processes wanted.')
     args = parser.parse_args()
-    print(args)
-    lake = LakeCoordinator(args.address, args.processes)
+    lake = LakeCoordinator(args.address, int(args.processes))
     lake.start_lake()
