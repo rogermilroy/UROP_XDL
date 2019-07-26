@@ -1,7 +1,6 @@
 import zmq
 from multiprocessing import Process
 import argparse
-import sys
 
 
 def lake_worker(address: str):
@@ -29,7 +28,7 @@ class LakeCoordinator:
         :return: None
         """
         for i in range(self.max_processes):
-            p = Process(target=lake_worker, args=self.source_address)
+            p = Process(target=lake_worker, args=self.source_address, daemon=True)
             self.processes.append(p)
 
 
