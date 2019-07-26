@@ -72,7 +72,7 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     return tens
 
 
-def data_to_json(epoch, epoch_minibatch, total_minibatch, inputs, model_state, outputs, targets):
+def data_to_json(epoch: int, epoch_minibatch: int, total_minibatch: int, inputs: Tensor, model_state: dict, outputs: Tensor, targets: Tensor) -> bytes:
     """
     Takes raw data from the training loop and converts to JSON to send to datalake.
     :param epoch: int Number of times through dataset.
@@ -82,7 +82,7 @@ def data_to_json(epoch, epoch_minibatch, total_minibatch, inputs, model_state, o
     :param model_state: dict The parameters of the model as a dict of Tensors.
     :param outputs: Tensor The outputs of the model as a Tensor
     :param targets: Tensor The target values of the model as a Tensor.
-    :return: JSON encoded dict.
+    :return: bytes JSON encoded dict. 
     """
     data = dict()  # TODO add training run data.
     data['epoch'] = epoch
@@ -97,8 +97,8 @@ def data_to_json(epoch, epoch_minibatch, total_minibatch, inputs, model_state, o
     return json.dumps(data)
 
 
-def metadata_to_json(model_name, training_run_number, epochs, batch_size, cuda, model, criterion,
-                     optimizer, metadata):
+def metadata_to_json(model_name: str, training_run_number: int, epochs: int, batch_size: int, cuda: bool, model: torch.nn.Module,
+                         criterion: torch.nn.Criterion, optimizer: torch.optim.Optimizer, metadata: dict) -> bytes:
     """
     Converts metadata to json.
     :param model_name: str The name of the model
@@ -110,7 +110,7 @@ def metadata_to_json(model_name, training_run_number, epochs, batch_size, cuda, 
     :param criterion: torch.nn.Criterion The loss criterion.
     :param optimizer: torch.optim.Optimizer The optimisation algorithm used.
     :param metadata: dict Any other metadata to be stored.
-    :return: JSON encoded dict.
+    :return: bytes JSON encoded dict.
     """
     mdata = dict()
     mdata['model_name'] = model_name
