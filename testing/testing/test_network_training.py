@@ -124,6 +124,7 @@ def main():
             extractor.extract_data(epoch=epoch+1, epoch_minibatch=minibatch_count+1,
                                    inputs=images, model_state=model.state_dict(),
                                    outputs=soft_out, targets=labels)
+            print(minibatch_count)
 
             # Update the weights
             optimizer.step()

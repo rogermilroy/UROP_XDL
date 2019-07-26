@@ -24,4 +24,3 @@ class TestFeedforwardNet(nn.Module):
         batch = torch.sigmoid(self.layer1(batch))
         batch = torch.sigmoid(self.layer2(batch))
         return batch
-
