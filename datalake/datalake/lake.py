@@ -1,7 +1,7 @@
-# coordinator of multiple processes that will take json data and store it temporarily.
 import zmq
 from multiprocessing import Process
 import argparse
+import sys
 
 
 def lake_worker(address: str):
@@ -41,3 +41,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     lake = LakeCoordinator(args.address, int(args.processes))
     lake.start_lake()
+    while True:
+        line = input('Type kill to end reading.')
+        if line == 'kill':
+            exit(code=1)
