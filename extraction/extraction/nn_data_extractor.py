@@ -13,12 +13,12 @@ class NNDataExtractor:
         """
         Creates the zmq context, socket and binds to the relevant port.
         """
-        context = zmq.Context()
-        self.socket = context.socket(zmq.PUSH)
+        self.context = zmq.Context()
+        self.sock = self.context.socket(zmq.PUSH)
         self.ip = get_ip()
-        self.port = 50005
+        self.port = 5555
         # currently only allowing tcp connection. May add more for flexibility later.
-        self.socket.bind('tcp://' + str(self.ip) + ":" + str(self.port))
+        self.sock.bind('tcp://' + str(self.ip) + ":" + str(self.port))
         print(str(self.ip) + ":" + str(self.port))
         self.total_minibatch_number = 0
 
@@ -68,6 +68,11 @@ class NNDataExtractor:
         :return: None
         """
         try:
-            self.socket.send(json_data)
+            self.sock.send(json_data)
         except zmq.ZMQError as e:
             print(e)
+
+
+if __name__ == '__main__':
+    test_extractor = NNDataExtractor()
+    test_extractor.send_json(b'Testing.')
