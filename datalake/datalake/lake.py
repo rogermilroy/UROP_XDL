@@ -17,7 +17,7 @@ def lake_worker(address: str):
 
 class LakeCoordinator:
 
-    def __init__(self, source_address, max_processes):
+    def __init__(self, source_address: str, max_processes: int):
         self.source_address = source_address
         self.max_processes = max_processes
         self.processes = list()
@@ -39,5 +39,6 @@ if __name__ == '__main__':
     parser.add_argument('address', help='The address of the server distributing the data.')
     parser.add_argument('processes', help='Number of processes wanted.')
     args = parser.parse_args()
+    print(args)
     lake = LakeCoordinator(args.address, args.processes)
     lake.start_lake()
