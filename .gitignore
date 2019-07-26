@@ -104,8 +104,8 @@ venv.bak/
 .mypy_cache/
 
 # pytorch dataset files.
-testing/processed
-testing/raw
+testing/testing/processed
+testing/testing/raw
 /processed
 /raw
 
@@ -114,3 +114,6 @@ testing/raw
 
 # VSCODE files
 .vscode
+
+# pip install files
+*.egg-info
