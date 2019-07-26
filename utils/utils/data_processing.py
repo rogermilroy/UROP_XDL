@@ -72,7 +72,8 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     return tens
 
 
-def data_to_json(epoch: int, epoch_minibatch: int, total_minibatch: int, inputs: Tensor, model_state: dict, outputs: Tensor, targets: Tensor) -> bytes:
+def data_to_json(epoch: int, epoch_minibatch: int, total_minibatch: int, inputs: Tensor,
+                 model_state: dict, outputs: Tensor, targets: Tensor) -> bytes:
     """
     Takes raw data from the training loop and converts to JSON to send to datalake.
     :param epoch: int Number of times through dataset.
@@ -97,8 +98,9 @@ def data_to_json(epoch: int, epoch_minibatch: int, total_minibatch: int, inputs:
     return json.dumps(data)
 
 
-def metadata_to_json(model_name: str, training_run_number: int, epochs: int, batch_size: int, cuda: bool, model: torch.nn.Module,
-                         criterion: torch.nn.Criterion, optimizer: torch.optim.Optimizer, metadata: dict) -> bytes:
+def metadata_to_json(model_name: str, training_run_number: int, epochs: int, batch_size: int,
+                     cuda: bool, model: torch.nn.Module, criterion,
+                     optimizer: torch.optim.Optimizer, metadata: dict) -> bytes:
     """
     Converts metadata to json.
     :param model_name: str The name of the model

@@ -1,5 +1,7 @@
 from utils.network_details import get_ip
 from utils.data_processing import *
+from torch import Tensor
+import torch
 import zmq
 
 
@@ -32,12 +34,16 @@ class NNDataExtractor:
         :param targets: Tensor The target values of the model as a Tensor.
         :return: None
         """
-        self.send_json(data_to_json(epoch, epoch_minibatch, self.total_minibatch_number, inputs,
-                                    model_state, outputs, targets))
+        self.send_json(data_to_json(epoch=epoch, epoch_minibatch=epoch_minibatch,
+                                    total_minibatch=self.total_minibatch_number,
+                                    inputs=inputs, model_state=model_state, outputs=outputs,
+                                    targets=targets))
         self.total_minibatch_number += 1
 
-    def extract_metadata(self, model_name: str, training_run_number: int, epochs: int, batch_size: int, cuda: bool, model: torch.nn.Module,
-                         criterion: torch.nn.Criterion, optimizer: torch.optim.Optimizer, metadata: dict) -> None:
+    def extract_metadata(self, model_name: str, training_run_number: int, epochs: int,
+                         batch_size: int, cuda: bool, model: torch.nn.Module,
+                         criterion, optimizer: torch.optim.Optimizer,
+                         metadata: dict) -> None:
         """
         Sends the metadata to the socket to be sent.
         :param model_name: str The name of the model
