@@ -1,5 +1,5 @@
-from utils.utils.network_details import get_ip
-from utils.utils.data_processing import *
+from utils.network_details import get_ip
+from utils.data_processing import *
 import zmq
 
 

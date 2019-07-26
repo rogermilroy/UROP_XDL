@@ -21,11 +21,8 @@ cd UROP_XDL
 # switch to current development branch
 git checkout implement-datalake
 
-cd datalake
-
-pip3 install --user -e .
-
-pip3 install --user -e ../utils
+pip3 install --user -e ./datalake
+pip3 install --user -e ./utils
 
 
 # TODO install MongoDB and set up.
