@@ -106,6 +106,8 @@ venv.bak/
 # pytorch dataset files.
 testing/testing/processed
 testing/testing/raw
+testing/processed
+testing/raw
 /processed
 /raw
 
