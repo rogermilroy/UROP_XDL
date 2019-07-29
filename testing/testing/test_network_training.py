@@ -85,9 +85,11 @@ def main():
                                batch_size=batch_size, cuda=use_cuda, model=model,
                                criterion=criterion, optimizer=optimizer, metadata=metadata)
 
-    extractor.extract_data(epoch=0, epoch_minibatch=0,
-                           inputs=None, model_state=model.state_dict(),
-                           outputs=None, targets=None)
+    # extractor.extract_data(epoch=0, epoch_minibatch=0,
+    #                        inputs=None, model_state=model.state_dict(),
+    #                        outputs=None, targets=None)
+    # was to record initial state but causes too many problems to be worth it. Also we gain very
+    # little from recording it.
 
     # Begin training procedure
     for epoch in range(num_epochs):
