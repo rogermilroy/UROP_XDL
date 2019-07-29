@@ -1,6 +1,7 @@
 import zmq
 from multiprocessing import Process
 import argparse
+import pymongo
 
 
 def lake_worker(address: str):
@@ -8,8 +9,6 @@ def lake_worker(address: str):
     receiver = context.socket(zmq.PULL)
     receiver.connect('tcp://' + address)
 
-
-    # TODO allow for kill signal.
     while True:
         msg = receiver.recv()
         print(msg)
@@ -38,7 +37,7 @@ class LakeCoordinator:
         Stop all the processes.
         :return: None
         """
-        # stop the processes TODO check if join works as expected.
+        # stop the processes
         for p in self.processes:
             p.terminate()
             p.join()

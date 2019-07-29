@@ -90,6 +90,7 @@ def main():
     #                        outputs=None, targets=None)
     # was to record initial state but causes too many problems to be worth it. Also we gain very
     # little from recording it.
+    # TODO remove or change. Maybe create empty Tensors for inputs and outputs?
 
     # Begin training procedure
     for epoch in range(num_epochs):
