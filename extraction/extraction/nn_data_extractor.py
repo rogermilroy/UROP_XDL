@@ -22,7 +22,8 @@ class NNDataExtractor:
         print(str(self.ip) + ":" + str(self.port))
         self.total_minibatch_number = 0
 
-    def extract_data(self, epoch: int, epoch_minibatch: int, inputs: Tensor, model_state: dict, outputs: Tensor, targets: Tensor) -> None:
+    def extract_data(self, model_name: str, training_run_number: int, epoch: int,
+                     epoch_minibatch: int, inputs: Tensor, model_state: dict, outputs: Tensor, targets: Tensor) -> None:
         """
         TODO add link to training run.
         Wrapper that encodes and sends data. Auto increments total minibatch number.
@@ -34,7 +35,9 @@ class NNDataExtractor:
         :param targets: Tensor The target values of the model as a Tensor.
         :return: None
         """
-        self.send_json(data_to_json(epoch=epoch, epoch_minibatch=epoch_minibatch,
+        self.send_json(data_to_json(model_name=model_name,
+                                    training_run_number=training_run_number, epoch=epoch,
+                                    epoch_minibatch=epoch_minibatch,
                                     total_minibatch=self.total_minibatch_number,
                                     inputs=inputs, model_state=model_state, outputs=outputs,
                                     targets=targets))
@@ -57,8 +60,11 @@ class NNDataExtractor:
         :param metadata: dict Any other metadata to be stored.
         :return: None
         """
-        self.send_json(metadata_to_json(model_name=model_name, training_run_number=training_run_number, epochs=epochs, batch_size=batch_size,
-                                        cuda=cuda, model=model, criterion=criterion, optimizer=optimizer, metadata=metadata))
+        self.send_json(metadata_to_json(model_name=model_name,
+                                        training_run_number=training_run_number, epochs=epochs,
+                                        batch_size=batch_size,
+                                        cuda=cuda, model=model, criterion=criterion,
+                                        optimizer=optimizer, metadata=metadata))
 
     def send_json(self, json_data: bytes) -> None:
         """

@@ -72,10 +72,13 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     return tens
 
 
-def data_to_json(epoch: int, epoch_minibatch: int, total_minibatch: int, inputs: Tensor,
+def data_to_json(model_name: str, training_run_number: int, epoch: int, epoch_minibatch: int,
+                 total_minibatch: int, inputs: Tensor,
                  model_state: dict, outputs: Tensor, targets: Tensor) -> bytes:
     """
     Takes raw data from the training loop and converts to JSON to send to datalake.
+    :param model_name: str The name of the model
+    :param training_run_number: int The number of the training run.
     :param epoch: int Number of times through dataset.
     :param epoch_minibatch: int The minibatch number within current epoch
     :param total_minibatch: int The total number of minibatches.
@@ -86,6 +89,8 @@ def data_to_json(epoch: int, epoch_minibatch: int, total_minibatch: int, inputs:
     :return: bytes JSON encoded dict. 
     """
     data = dict()  # TODO add training run data.
+    data['model_name'] = model_name
+    data['training_run_number'] = training_run_number
     data['epoch'] = epoch
     data['epoch_minibatch'] = epoch_minibatch
     data['total_minibatch'] = total_minibatch
