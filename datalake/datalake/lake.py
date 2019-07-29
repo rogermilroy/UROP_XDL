@@ -1,7 +1,6 @@
 import zmq
 from multiprocessing import Process
 import argparse
-import os
 
 
 def lake_worker(address: str):
@@ -9,16 +8,11 @@ def lake_worker(address: str):
     receiver = context.socket(zmq.PULL)
     receiver.connect('tcp://' + address)
 
-    if not os.path.exists('./test_output'):
-        os.mkdir('./test_output')
 
-    with open('./test_output/test1', 'a+') as f:
-
-        # TODO allow for kill signal.
-        while True:
-            msg = receiver.recv()
-            # print(msg)
-            f.write(msg + "\n")
+    # TODO allow for kill signal.
+    while True:
+        msg = receiver.recv()
+        print(msg)
 
 
 class LakeCoordinator:
@@ -35,8 +29,21 @@ class LakeCoordinator:
         :return: None
         """
         for i in range(self.max_processes):
-            p = Process(target=lake_worker, args=self.source_address, daemon=True)
+            p = Process(target=lake_worker, args=(self.source_address,), daemon=True)
+            p.start()
             self.processes.append(p)
+
+    def end_lake(self):
+        """
+        Stop all the processes.
+        :return: None
+        """
+        # stop the processes TODO check if join works as expected.
+        for p in self.processes:
+            p.terminate()
+            p.join()
+        # after all the processes have been terminated we empty the list of processes.
+        self.processes = list()
 
 
 if __name__ == '__main__':
@@ -50,5 +57,5 @@ if __name__ == '__main__':
     while True:
         line = input('Type kill to end reading.')
         if line == 'kill':
+            lake.end_lake()
             exit(code=1)
-    # lake_worker(args.address)
