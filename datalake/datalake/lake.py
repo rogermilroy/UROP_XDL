@@ -1,6 +1,7 @@
 import zmq
 from multiprocessing import Process
 import argparse
+import os
 
 
 def lake_worker(address: str):
@@ -8,10 +9,16 @@ def lake_worker(address: str):
     receiver = context.socket(zmq.PULL)
     receiver.connect('tcp://' + address)
 
-    # TODO allow for kill signal.
-    while True:
-        msg = receiver.recv()
-        print(msg)
+    if not os.path.exists('./test_output'):
+        os.mkdir('./test_output')
+
+    with open('./test_output/test1', 'a+') as f:
+
+        # TODO allow for kill signal.
+        while True:
+            msg = receiver.recv()
+            # print(msg)
+            f.write(msg + "\n")
 
 
 class LakeCoordinator:
@@ -44,3 +51,4 @@ if __name__ == '__main__':
         line = input('Type kill to end reading.')
         if line == 'kill':
             exit(code=1)
+    # lake_worker(args.address)
