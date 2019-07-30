@@ -10,13 +10,11 @@ def encode_model_state(model_state: dict) -> dict:
     :param model_state: dict containing the weight and bias Tensors.
     :return: dict containing weights and biases encoded as dicts.
     """
+    state = dict()
     for key, value in model_state.items():
-        if isinstance(value, Tensor):
-            # np.save(b, value.numpy())
-            model_state[key] = encode_tensor(value)
-        else:
-            print("Not Tensor")
-    return model_state
+        rkey = key.replace('.', '_dot_')
+        state[rkey] = encode_tensor(value)
+    return state
 
 
 def decode_model_state(model_state: dict) -> dict:
@@ -25,9 +23,11 @@ def decode_model_state(model_state: dict) -> dict:
     :param model_state: dict containing weights and biases as dicts.
     :return: dict containing weight and bias Tensors.
     """
+    state = dict()
     for key, value in model_state:
-        model_state[key] = decode_tensor(value)
-    return model_state
+        rkey = key.replace('_dot_', '.')
+        state[rkey] = decode_tensor(value)
+    return state
 
 
 def encode_tensor(tensor: Tensor) -> dict:
