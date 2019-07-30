@@ -124,7 +124,8 @@ def main():
             soft_out = functional.softmax(outputs, dim=1)
             # print(soft_out.shape)
 
-            extractor.extract_data(epoch=epoch+1, epoch_minibatch=minibatch_count+1,
+            extractor.extract_data(model_name="test_network", training_run_number=1,
+                                   epoch=epoch+1, epoch_minibatch=minibatch_count+1,
                                    inputs=images, model_state=model.state_dict(),
                                    outputs=soft_out, targets=labels)
             print(minibatch_count)
