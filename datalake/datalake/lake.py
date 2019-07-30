@@ -59,7 +59,7 @@ class LakeWorker:
         :return: None
         """
         for col, data in self.buffer.items():
-            result = self.db.col.insert_many(data, bypass_document_validation=True)
+            result = self.db[col].insert_many(data)
         self.buffer = dict()
 
 
