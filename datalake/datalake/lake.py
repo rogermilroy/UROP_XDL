@@ -58,8 +58,8 @@ class LakeWorker:
         Sends all data stored in the buffer to the db and clears the buffer.
         :return: None
         """
-        for col, data in self.buffer:
-            result = self.db.col.insert_many(data)
+        for col, data in self.buffer.items():
+            result = self.db.col.insert_many(data, bypass_document_validation=True)
         self.buffer = dict()
 
 
@@ -81,7 +81,7 @@ class LakeCoordinator:
         :return: None
         """
         for i in range(self.max_processes):
-            p = Process(target=lake_worker, args=(self.source_address, self.db_conn_string), daemon=True)
+            p = Process(target=lake_worker, args=(self.source_address, self.db_conn_string, self.process_capacity), daemon=True)
             p.start()
             self.processes.append(p)
 
