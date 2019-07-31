@@ -74,7 +74,7 @@ class NNDataExtractor:
         :return: None
         """
         try:
-            self.sock.send(json_data)
+            self.sock.send_string(json_data)
         except zmq.ZMQError as e:
             print(e)
 

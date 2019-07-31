@@ -37,7 +37,7 @@ class LakeWorker:
         counter = 0
         while True:
             # read the data
-            msg = self.receiver.recv()
+            msg = self.receiver.recv_string()
             data = json.loads(msg)
             # create the identity string (becomes the name of the collection)
             col = data["model_name"] + str(data["training_run_number"])
