@@ -1,7 +1,8 @@
 from torch import Tensor
 import torch
 import numpy as np
-import zmq.utils.jsonapi as json
+import ujson as json
+# import zmq.utils.jsonapi as json
 
 
 def encode_model_state(model_state: dict) -> dict:
