@@ -119,3 +119,6 @@ testing/raw
 
 # pip install files
 *.egg-info
+
+# MacOS files
+.DS_Store
