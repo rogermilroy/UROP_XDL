@@ -122,3 +122,6 @@ testing/raw
 
 # MacOS files
 .DS_Store
+
+# Data files
+ChestXrayImgs
