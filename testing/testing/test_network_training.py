@@ -5,8 +5,11 @@ from torch.nn import functional
 from tqdm import tqdm
 from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet
+from torchvision.datasets import MNIST
+import os
+from torchvision.transforms import ToTensor
 
-# Database imports, TODO remove when possible
+# Database imports TODO remove when possible
 
 # extractor imports
 from extraction.nn_data_extractor import NNDataExtractor
@@ -56,10 +59,12 @@ def main():
         print("CUDA NOT supported")
 
     # Setup the training, validation, and testing dataloaders
-    train_loader, val_loader, test_loader = create_split_loaders(batch_size, seed,
+    train_loader, val_loader, test_loader = create_split_loaders(MNIST(root=os.getcwd(),
+                                                                       transform=ToTensor(),
+                                                                       download=True),
+                                                                 batch_size, seed,
                                                                  p_val=p_val, p_test=p_test,
-                                                                 shuffle=True,
-                                                                 extras=extras)
+                                                                 shuffle=True, extras=extras)
 
     # Instantiate a BasicCNN to run on the GPU or CPU based on CUDA support
     model = TestFeedforwardNet()

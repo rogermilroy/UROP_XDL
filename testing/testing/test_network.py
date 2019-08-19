@@ -2,6 +2,7 @@ import torch
 from torch.nn.functional import *
 import torch.nn as nn
 import torch.nn.init as torch_init
+from collections import OrderedDict
 
 
 class TestFeedforwardNet(nn.Module):
@@ -10,19 +11,33 @@ class TestFeedforwardNet(nn.Module):
     """
     def __init__(self):
         super(TestFeedforwardNet, self).__init__()
+        self.activations = OrderedDict()
         # weights from input to hidden layer
         self.layer1 = nn.Linear(784, 100)
         # Use Xavier normal weights initialisation.
         torch_init.xavier_normal_(self.layer1.weight)
 
         # weights from hidden layer to outputs
-        self.layer2 = nn.Linear(100, 10)
+        self.layer2 = nn.Linear(100, 100)
         # Use Xavier normal weights initialisation.
         torch_init.xavier_normal_(self.layer2.weight)
 
+        self.layer3 = nn.Linear(100, 10)
+        torch_init.xavier_normal_(self.layer2.weight)
+
     def forward(self, batch):
-        batch = torch.sigmoid(self.layer1(batch))
-        batch = torch.sigmoid(self.layer2(batch))
+        """
+        Forward pass through the network.
+        Adds the activations to a dict for later relevance propagation.
+        :param batch: Tensor Input batch
+        :return: Tensor Output
+        """
+        batch = torch.tanh(self.layer1(batch))
+        self.activations['layer1'] = batch
+        batch = torch.tanh(self.layer2(batch))
+        self.activations['layer2'] = batch
+        batch = self.layer3(batch)
+        self.activations['layer3'] = batch
         return batch
 
 
@@ -41,6 +56,8 @@ class TestDeepCNN(nn.Module):
 
     def __init__(self):
         super(TestDeepCNN, self).__init__()
+
+        self.activations = dict()
 
         # conv1: 1 input channel, 12 output channels, [8x8] kernel size
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=12, kernel_size=8)
@@ -131,7 +148,7 @@ class TestDeepCNN(nn.Module):
         batch = self.fc2(batch)
 
         # Return the class predictions
-        return sigmoid(batch)
+        return torch.sigmoid(batch)
 
     def num_flat_features(self, inputs):
         # Get the dimensions of the layers excluding the inputs
