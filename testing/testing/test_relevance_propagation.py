@@ -1,6 +1,6 @@
 import unittest
 from testing.test_network import TestFeedforwardNet
-from analysis.relevance_propagation import layerwise_relevance
+from analysis.relevance_propagation import *
 from torchvision.transforms import ToTensor
 from torchvision.datasets import MNIST
 from testing.test_dataloaders import create_split_loaders
@@ -38,6 +38,26 @@ class TestRelevancePropagation(unittest.TestCase):
         pass
 
     def test_param_processing(self):
-        layerwise_relevance(model=self.model)
+        pass
+        # layerwise_relevance(model=self.model)
 
     def test_linear_relevance(self):
+        activations = torch.tensor([[0.7, 0.1, 0.3, 0.8]])
+        weights = torch.tensor([[0., 1., 0., 0.],
+                                [1., -1., -2., 1.],
+                                [0., -2., 1., 0]]).t()
+        relevances = torch.tensor([[0., 0.8, 0.]])
+        self.assertTrue(-0.001 < float(torch.sum(linear_relevance(activations, weights,
+                                                                  relevances) -
+                         torch.tensor([[0.3733, 0.0000, 0.0000, 0.4267]]))) < 0.001)
+
+    def test_batch_linear_relevance(self):
+        activations = torch.tensor([[0.7, 0.1, 0.3, 0.8],
+                                    [0.2, 0.7, 0.1, 0.3]])
+        weights = torch.tensor([[0., 1., 0., 0.],
+                                [1., -1., -2., 1.],
+                                [0., -2., 1., 0]]).t()
+        relevances = torch.tensor([[0., 0.8, 0.]])
+        self.assertTrue(-0.001 < float(torch.sum(linear_relevance(activations, weights,
+                                                                  relevances)[1] -
+                         torch.tensor([[0.3200, 0.0000, 0.0000, 0.4800]]))) < 0.001)

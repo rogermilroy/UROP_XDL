@@ -7,26 +7,29 @@ from torch import Tensor
 def linear_relevance(activations: Tensor, weights: Tensor, relevance: Tensor) -> Tensor:
     """
     Calculate the relevances for a linear layer.
-    :param activations: Tensor of activations
-    :param weights: Tensor of weights
-    :return: Tensor of relevances.
+    :param activations: Tensor of activations for layer relevances are being propagated to.
+    :param weights: Tensor of weights between the layers
+    :param relevance: Tensor of relevances for layer above.
+    :return: Tensor of relevances for layer.
     """
     # TODO have changeable alpha and beta
-    alpha = 0.5
-    beta = 0.5
+    alpha = 1.0
+    beta = 0.0
 
     # take the positive weights TODO use epsilon?
     pos = torch.clamp(weights, min=0)
     pZ = torch.matmul(activations, pos) + 1e-9
     pS = relevance / pZ
-    pC = torch.matmul(pS, activations.t())
+    pC = torch.matmul(pS, pos.t())
     P = activations * pC * alpha
+    # print("Positive relevance: ", P)
 
     neg = torch.clamp(weights, max=0)
-    nZ = torch.matmul(activations, pos) + 1e-9
+    nZ = torch.matmul(activations, neg) + 1e-9
     nS = relevance / nZ
-    nC = torch.matmul(nS, activations.t())
-    N = activations * nC * alpha
+    nC = torch.matmul(nS, neg.t())
+    N = activations * nC * beta
+    # print("Negative relevance: ", N)
 
     return P - N
 
