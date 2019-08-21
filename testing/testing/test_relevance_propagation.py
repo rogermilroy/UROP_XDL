@@ -31,15 +31,14 @@ class TestRelevancePropagation(unittest.TestCase):
             if num == 1:
                 break
             batch = images
-        batch = torch.reshape(batch, (-1, 784))
-        self.model.forward(batch)
+        self.batch = torch.reshape(batch, (-1, 784))
+        self.model.forward(self.batch)
 
     def tearDown(self) -> None:
         pass
 
     def test_param_processing(self):
-        pass
-        # layerwise_relevance(model=self.model)
+        print(layerwise_relevance(model=self.model, inputs=self.batch))
 
     def test_linear_relevance(self):
         activations = torch.tensor([[0.7, 0.1, 0.3, 0.8]])
