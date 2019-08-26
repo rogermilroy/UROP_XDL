@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor
+import torch.nn.functional as func
 
 
 def linear_relevance(activations: Tensor, weights: Tensor, relevance: Tensor, alpha, beta) -> \
@@ -89,9 +90,11 @@ def layerwise_relevance(model, inputs) -> tuple:
     # TODO think about conv dimensions.
 
     relevances = list()
+    layers[0] = func.softmax(layers[0])
     mask = torch.zeros_like(layers[0])
-    mask[0,torch.argmax(layers[0])] = 1.
+    mask[0, torch.argmax(layers[0])] = 1.
     rel = layers[0] * mask
+    relevances.append(rel)
     # iterate through the list of layers and compute relevances.
     print(range(1, len(layers) - 1, 2))
     for i in range(1, len(layers) - 1, 2):
