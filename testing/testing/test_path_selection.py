@@ -1,6 +1,7 @@
 import unittest
-from torch import tensor
+
 from analysis.path_selection import *
+from torch import tensor
 
 
 class TestPathSelection(unittest.TestCase):
@@ -52,3 +53,9 @@ class TestPathSelection(unittest.TestCase):
                           [9.1, 4.5, 3.1, 7.6, 1., 2.]])]
         ref = [[(0, 5), (1, 4), (1, 5), (2, 3), (2, 0)], [(0, 5), (1, 5), (1, 4), (2, 3), (2, 0)]]
         self.assertEqual(top_weights(list(), test_w, 5), ref)
+
+    def test_relevant_neurons_selection(self):
+        test_rel = [tensor([2., 0.3, 0.8, 0.3, 1.1, 0.1, 0.09]),
+                    tensor([0.1, 0.2, 0.9, 0.4, 2., 0.85, 1.3, 0.65, 0.72, 1.11]),
+                    tensor([1.78, 0.14, 0.75, 0.94, 0.37, 1.87, 0.28, 1.26, 0.69, 0.80, 1.9, 0.12])]
+        top_relevant_neurons(test_rel, list(), 3)
