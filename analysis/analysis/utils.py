@@ -85,3 +85,24 @@ def recurse_large_neg(tensor: Tensor, top: list, indices: list, n: int, dim: int
         # reset index for next iteration.
         indices[dim] = 0
         return top
+
+
+def all_weights(l1: list, l2: list) -> list:
+    """
+    Method that assembles the indices of the weights connecting the neurons indexed in the two
+    lists.
+    :param l1: list Indices of neurons.
+    :param l2: list Indices of neurons.
+    :return: list Indices of weights.
+    """
+    # in simplest form ( two lists of lists containing a single number)
+    # TODO deal with different dimensionality.
+    result = list()
+    if len(l1[0]) == 1:
+        for index in l1:
+            for idx in l2:
+                result.append([index[0], idx[0]])
+    else:
+        raise NotImplementedError("Only linear layers currently supported.")
+    return result
+
