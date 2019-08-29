@@ -1,17 +1,20 @@
 from analysis.utils import *
 
 
-def top_n_weights(weights: Tensor, n: int) -> list:
+def largest_n(tensor: Tensor, n: int, pos: bool) -> list:
     """
     Finds the n largest weights.
-    :param weights: Tensor n dimensional weights tensor
+    :param tensor: Tensor n dimensional weights tensor
     :param n: int The number of weights to find.
+    :param pos: bool Whether to use the positive or negative version.
     :return: list A heap containing the largest weights and their indices in the format (weight,
     (indices))
     """
-    dims = len(weights.size())
-    indices = [0] * dims
-    return recurse_large_pos(weights, list(), indices, n, 0)
+    indices = [0] * len(tensor.size())
+    if pos:
+        return recurse_large_pos(tensor, list(), indices, n, 0)
+    else:
+        return recurse_large_neg(tensor, list(), indices, n, 0)
 
 
 def band_search(relevances: list, weights: list, n: int) -> list:
@@ -35,7 +38,7 @@ def top_weights(relevances: list, weights: list, n: int) -> list:
     """
     result = list()
     for weight_layer in weights:
-        t = top_n_weights(weights=weight_layer, n=n)
+        t = largest_n(tensor=weight_layer, n=n, pos=True)
         res = [it[1] for it in t]
         result.append(res)
     return result

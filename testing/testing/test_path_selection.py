@@ -18,7 +18,7 @@ class TestPathSelection(unittest.TestCase):
                          [[5., 3.11, 2.1, 1.1, 2.1, 5.],
                           [1.1, 0.3, 3., 3.3, 6., 5.],
                           [9.1, 4.5, 3.1, 7.6, 1., 2.]]])
-        t = top_n_weights(test_w, 5)
+        t = largest_n(test_w, 5, True)
         ref = [(tensor(6.), (1, 1, 4)), (tensor(7.6000), (0, 2, 3)), (tensor(7.6000), (1, 2, 3)), (tensor(9.1000), (1, 2, 0)), (tensor(9.), (0, 2, 0))]
         ans = 0.
         for i in range(len(t)):
