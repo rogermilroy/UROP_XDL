@@ -23,6 +23,7 @@ def band_search(relevances: list, weights: list, n: int) -> list:
     Returns indices of weights per layer.
     :param relevances: list of Tensors. Relevance values for neurons.
     :param weights: list of Tensors. Weights.
+    :param n: int TODO decide exactly what n will decide. Total paths? paths per layer?
     :return: List of indices.
     """
     pass
@@ -34,6 +35,7 @@ def top_weights(relevances: list, weights: list, n: int) -> list:
     comparison.
     :param relevances: list A list of Tensors containing relevance values per neuron. Not Used.
     :param weights: list A list of Tensors containing the weights between the layers.
+    :param n: int The number of weights desired per layer.
     :return: list A list containing per layer the indices of the largest weights.
     """
     result = list()
@@ -47,6 +49,14 @@ def top_relevant_neurons(relevances: list, weights: list, n: int) -> list:
     Selects the weights between the top n most relevant neurons as the most relevant.
     :param relevances:
     :param weights:
+    :param n: int
     :return:
     """
+    # find the most relevant neurons per layer (positive)
+    most_relev = list()
+    for layer in relevances:
+        most_relev.append(largest_n(layer, n, pos=True))
+    print(most_relev)
+    # this is where it gets complicated.
+    # need to select the right indices regardless of dimensionality.
     pass
