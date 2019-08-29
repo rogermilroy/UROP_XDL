@@ -20,11 +20,8 @@ class TestPathSelection(unittest.TestCase):
                           [1.1, 0.3, 3., 3.3, 6., 5.],
                           [9.1, 4.5, 3.1, 7.6, 1., 2.]]])
         t = largest_n(test_w, 5, True)
-        ref = [(tensor(6.), (1, 1, 4)), (tensor(7.6000), (0, 2, 3)), (tensor(7.6000), (1, 2, 3)), (tensor(9.1000), (1, 2, 0)), (tensor(9.), (0, 2, 0))]
-        ans = 0.
-        for i in range(len(t)):
-            ans += t[i][0] - ref[i][0]
-        self.assertTrue(-0.001 < ans < 0.001)
+        ref = [[1, 1, 4],  [0, 2, 3], [1, 2, 3], [1, 2, 0], [0, 2, 0]]
+        self.assertEqual(ref, t)
 
     def test_top_n_weights_neg(self):
         test_w = tensor([[[-5., -3., -2., -2., -2.3, -5.],
@@ -33,16 +30,11 @@ class TestPathSelection(unittest.TestCase):
                          [[-5., -3.11, -2.1, -1.1, -2.1, -5.],
                           [-1.1, -0.3, -3., -3.3, -6., -5.],
                           [-9.1, -4.5, -3.1, -7.6, -1., -2.]]])
-        dims = len(test_w.size())
-        indices = [0] * dims
 
-        t = recurse_large_neg(test_w, list(), indices, 5, 0)
-        ref = [(tensor(-6.), (1, 1, 4)), (tensor(-7.6000), (0, 2, 3)), (tensor(-7.6000), (1, 2, 3)),
-               (tensor(-9.1000), (1, 2, 0)), (tensor(-9.), (0, 2, 0))]
-        ans = 0.
-        for i in range(len(t)):
-            ans += t[i][0] - ref[i][0]
-        self.assertTrue(-0.001 < ans < 0.001)
+        t = largest_n(test_w, 5, False)
+        ref = [[0, 1, 4], [0, 2, 3], [1, 2, 3], [1, 2, 0], [0, 2, 0]]
+
+        self.assertEqual(ref, t)
 
     def test_top_weights_path(self):
         test_w = [tensor([[5., 3., 2., 2., 2.3, 5.],
@@ -51,8 +43,8 @@ class TestPathSelection(unittest.TestCase):
                   tensor([[5., 3.11, 2.1, 1.1, 2.1, 5.],
                           [1.1, 0.3, 3., 3.3, 6., 5.],
                           [9.1, 4.5, 3.1, 7.6, 1., 2.]])]
-        ref = [[(0, 5), (1, 4), (1, 5), (2, 3), (2, 0)], [(0, 5), (1, 5), (1, 4), (2, 3), (2, 0)]]
-        self.assertEqual(top_weights(list(), test_w, 5), ref)
+        ref = [[[0, 5], [1, 4], [1, 5], [2, 3], [2, 0]], [[0, 5], [1, 5], [1, 4], [2, 3], [2, 0]]]
+        self.assertEqual(ref, top_weights(list(), test_w, 5))
 
     def test_relevant_neurons_selection(self):
         test_rel = [tensor([2., 0.3, 0.8, 0.3, 1.1, 0.1, 0.09]),

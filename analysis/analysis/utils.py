@@ -1,8 +1,10 @@
 # Utils for analysis module.
 
-from torch import Tensor
+from copy import deepcopy
 from heapq import heappush, heapreplace
+
 from heapq_max import heappush_max, heapreplace_max
+from torch import Tensor
 
 
 def recurse_large_pos(tensor: Tensor, top: list, indices: list, n: int, dim: int) -> list:
@@ -24,13 +26,13 @@ def recurse_large_pos(tensor: Tensor, top: list, indices: list, n: int, dim: int
             # item is bigger than smallest item
             if tensor > top[0][0]:
                 # add to heap
-                heapreplace(top, (tensor, tuple(indices)))
+                heapreplace(top, (tensor, deepcopy(indices)))
                 return top
             # make sure we return top in all cases.
             return top
         else:
             # add to heap
-            heappush(top, (tensor, tuple(indices)))
+            heappush(top, (tensor, deepcopy(indices)))
             return top
     # not a single number (tensor of some shape)
     else:
@@ -64,13 +66,13 @@ def recurse_large_neg(tensor: Tensor, top: list, indices: list, n: int, dim: int
             # item is bigger than smallest item with negation to deal with negative items.
             if tensor < top[0][0]:
                 # add to heap
-                heapreplace_max(top, (tensor, tuple(indices)))
+                heapreplace_max(top, (tensor, deepcopy(indices)))
                 return top
             # make sure we return top in all cases.
             return top
         else:
             # add to heap
-            heappush_max(top, (tensor, tuple(indices)))
+            heappush_max(top, (tensor, deepcopy(indices)))
             return top
     # not a single number (tensor of some shape)
     else:
