@@ -1,17 +1,18 @@
 import unittest
-from testing.test_network import TestFeedforwardNet
-from analysis.relevance_propagation import *
-from torchvision.transforms import ToTensor
-from torchvision.datasets import MNIST
-from testing.test_dataloaders import create_split_loaders
-import torch
+
 import matplotlib.pyplot as plt
+import torch
+from analysis.relevance_propagation import *
+from testing.test_dataloaders import create_split_loaders
+from testing.test_network import TestFeedforwardNet
+from torchvision.datasets import MNIST
+from torchvision.transforms import ToTensor
 
 
 def visualise_mnist_relevance(relevances:list):
     relevance = relevances[-1].detach()
     relevance = torch.reshape(relevance, (28, 28))
-    print(relevance.size())
+    # print(relevance.size())
     plt.imshow(relevance)
     plt.show()
 
@@ -49,6 +50,8 @@ class TestRelevancePropagation(unittest.TestCase):
 
     def test_param_processing(self):
         relevances, weights = layerwise_relevance(model=self.model, inputs=self.batch)
+        # print("Relevances: ", len(relevances))
+        # print("Weights: ", len(weights))
         visualise_mnist_relevance(relevances)
 
     def test_linear_relevance(self):

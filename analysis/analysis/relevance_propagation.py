@@ -1,6 +1,6 @@
 import torch
-from torch import Tensor
 import torch.nn.functional as func
+from torch import Tensor
 
 
 def linear_relevance(activations: Tensor, weights: Tensor, relevance: Tensor, alpha, beta) -> \
@@ -48,12 +48,12 @@ def propagate_relevance(activations: Tensor, weights: Tensor, relevance: Tensor,
     """
     # check linear layer TODO add flags?
     if len(activations.size()) == 2 and len(weights.size()) == 2:
-        print("Linear layer with a batch")
+        # print("Linear layer with a batch")
         return linear_relevance(activations, weights, relevance, alpha, beta)
         # TODO how do we deal with batches?
 
     elif len(activations.size()) == 1 and len(weights.size()) == 2:
-        print("Linear layer single entry.")
+        # print("Linear layer single entry.")
         return linear_relevance(activations, weights, relevance, alpha, beta)
     # TODO add convolutions and more.
     else:
@@ -83,8 +83,8 @@ def layerwise_relevance(model, inputs) -> tuple:
     layers.append(inputs)
 
     # simple sanity check to make sure the layers are in the right order.
-    for item in layers:
-        print(item.size())
+    # for item in layers:
+    #     print(item.size())
 
     # TODO think about dimensions for batch operations
     # TODO think about conv dimensions.
