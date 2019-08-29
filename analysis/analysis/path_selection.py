@@ -27,13 +27,18 @@ def band_search(relevances: list, weights: list, n: int) -> list:
 
 def top_weights(relevances: list, weights: list, n: int) -> list:
     """
-    Selects the largest n weights per layer as the most relevant ones.
-    :param relevances:
-    :param weights:
-    :return:
+    Selects the largest n weights per layer as the most relevant ones. Basically a benchmark for
+    comparison.
+    :param relevances: list A list of Tensors containing relevance values per neuron. Not Used.
+    :param weights: list A list of Tensors containing the weights between the layers.
+    :return: list A list containing per layer the indices of the largest weights.
     """
+    result = list()
     for weight_layer in weights:
-        pass
+        t = top_n_weights(weights=weight_layer, n=n)
+        res = [it[1] for it in t]
+        result.append(res)
+    return result
 
 
 def top_relevant_neurons(relevances: list, weights: list, n: int) -> list:
