@@ -50,4 +50,10 @@ class TestPathSelection(unittest.TestCase):
         test_rel = [tensor([2., 0.3, 0.8, 0.3, 1.1, 0.1, 0.09]),
                     tensor([0.1, 0.2, 0.9, 0.4, 2., 0.85, 1.3, 0.65, 0.72, 1.11]),
                     tensor([1.78, 0.14, 0.75, 0.94, 0.37, 1.87, 0.28, 1.26, 0.69, 0.80, 1.9, 0.12])]
-        top_relevant_neurons(test_rel, list(), 3)
+        ref = [[[2, 9], [2, 4], [2, 6], [0, 9], [0, 4], [0, 6], [4, 9], [4, 4], [4, 6]], [[9, 0], [9, 10], [9, 5], [4, 0], [4, 10], [4, 5], [6, 0], [6, 10], [6, 5]]]
+        self.assertEqual(ref, top_relevant_neurons(test_rel, list(), 3))
+
+    def test_all_weights_linear(self):
+        a = [[[2], [0], [4]], [[9], [4], [6]], [[0], [10], [5]]]
+        ref = [[2, 9], [2, 4], [2, 6], [0, 9], [0, 4], [0, 6], [4, 9], [4, 4], [4, 6]]
+        self.assertEqual(ref, all_weights(a[0], a[1]))

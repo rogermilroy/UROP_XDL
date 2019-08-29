@@ -47,16 +47,18 @@ def top_weights(relevances: list, weights: list, n: int) -> list:
 def top_relevant_neurons(relevances: list, weights: list, n: int) -> list:
     """
     Selects the weights between the top n most relevant neurons as the most relevant.
-    :param relevances:
-    :param weights:
-    :param n: int
-    :return:
+    :param relevances: list A list of Tensors containing relevance values per neuron. Not Used.
+    :param weights: list A list of Tensors containing the weights between the layers.
+    :param n: int The number of neurons to take per layer.
+    :return: list A list of indices of weights in the path to track.
     """
+    # TODO have a different number of relevant neurons for the output layer. Probably only want one?
     # find the most relevant neurons per layer (positive)
     most_relev = list()
     for layer in relevances:
         most_relev.append(largest_n(layer, n, pos=True))
-    print(most_relev)
-    # this is where it gets complicated.
-    # need to select the right indices regardless of dimensionality.
-    pass
+    # assemble the indices of weights that connect the neurons.
+    result = list()
+    for i in range(len(most_relev) - 1):
+        result.append(all_weights(most_relev[i], most_relev[i+1]))
+    return result
