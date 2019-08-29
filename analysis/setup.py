@@ -9,6 +9,7 @@ setup(
         'torch>=1.1.0',
         'torchvision>=0.2.1',
         'pyzmq>=18.0.2',
-        'tqdm>=4.31.1'
+        'tqdm>=4.31.1',
+        'heapq_max>=0.21'
     ],
 )
