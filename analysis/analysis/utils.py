@@ -106,3 +106,15 @@ def all_weights(l1: list, l2: list) -> list:
         raise NotImplementedError("Only linear layers currently supported.")
     return result
 
+
+def path_to_weights(path: list) -> list:
+    """
+    Takes a list of neurons and returns the weights that connect them.
+    TODO think about multidimensional inputs.
+    :param path: list A list of neuron indices.
+    :return: list A list of weight indices.
+    """
+    weights = list()
+    for i in range(len(path) - 1):
+        weights.append([path[i][0], path[i+1][0]])
+    return weights

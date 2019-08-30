@@ -57,3 +57,10 @@ class TestPathSelection(unittest.TestCase):
         a = [[[2], [0], [4]], [[9], [4], [6]], [[0], [10], [5]]]
         ref = [[2, 9], [2, 4], [2, 6], [0, 9], [0, 4], [0, 6], [4, 9], [4, 4], [4, 6]]
         self.assertEqual(ref, all_weights(a[0], a[1]))
+
+    def test_band(self):
+        test_rel = [tensor([2., 0.3, 0.8, 0.3, 1.1, 0.1, 0.09]),
+                    tensor([0.1, 0.2, 0.9, 0.4, 2., 0.85, 1.3, 0.65, 0.72, 1.11]),
+                    tensor([1.78, 0.14, 0.75, 0.94, 0.37, 1.87, 0.28, 1.26, 0.69, 0.80, 1.9, 0.12])]
+        ref = [[[0, 4], [4, 0]], [[0, 4], [4, 5]], [[0, 6], [6, 7]], [[0, 6], [6, 10]]]
+        self.assertEqual(ref, band_selection(test_rel, list(), 2))

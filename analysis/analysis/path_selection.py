@@ -1,12 +1,16 @@
+import math
+
 from analysis.utils import *
 
 
-def largest_n(tensor: Tensor, n: int, pos: bool) -> list:
+def largest_n(tensor: Tensor, n: int, pos: bool, in_order: bool = False, desc: bool = True) -> list:
     """
     Finds the n largest weights.
     :param tensor: Tensor n dimensional weights tensor
     :param n: int The number of weights to find.
     :param pos: bool Whether to use the positive or negative version.
+    :param in_order: bool Whether to sort the output.
+    :param desc: bool Whether the sorted output should be descending order.
     :return: list A heap of tuples containing the  indices of the largest weights.
     """
     indices = [0] * len(tensor.size())
@@ -14,10 +18,12 @@ def largest_n(tensor: Tensor, n: int, pos: bool) -> list:
         t = recurse_large_pos(tensor, list(), indices, n, 0)
     else:
         t = recurse_large_neg(tensor, list(), indices, n, 0)
+    if in_order:
+        t.sort(reverse=desc)
     return [it[1] for it in t]
 
 
-def band_search(relevances: list, weights: list, n: int) -> list:
+def band_selection(relevances: list, weights: list, n: int) -> list:
     """
     Uses a similar idea to band search to identify the most relevant pathways through the network.
     Returns indices of weights per layer.
@@ -26,7 +32,40 @@ def band_search(relevances: list, weights: list, n: int) -> list:
     :param n: int TODO decide exactly what n will decide. Total paths? paths per layer?
     :return: List of indices.
     """
-    pass
+    # select largest n*layer neurons per layer. using largest n
+    layer_largest = list()
+    for i in range(len(relevances)):
+        if i == 0:
+            layer_largest.append(largest_n(relevances[i], n=1, pos=True))
+        else:
+            layer_largest.append(sorted(largest_n(relevances[i], n=i*n, pos=True, in_order=True,
+                                                  desc=True)))
+
+    # have a current path variable
+    current_path = list()
+    paths = list()
+    depth = len(layer_largest)
+
+    indices = [0] * depth
+
+    # iterate over the total number of paths.
+    for i in range(len(layer_largest[-1])):
+        # permute the indices.
+        for z in range(len(layer_largest)):
+            power = (depth - 1) - z
+            indices[z] = int(i // math.pow(n, power))
+        # iterate over the layers.
+        for j in range(len(layer_largest)):
+            # add the item at indices in that layer to the path.
+            current_path.append(layer_largest[j][indices[j]])
+        # add the weights of the path to the list and clear it for the next path.
+        paths.append(path_to_weights(current_path))
+        current_path = list()
+
+    # TODO Need to check for narrower sections and potentially saturating the neurons
+    # make n the maximum branching factor.
+
+    return paths
 
 
 def top_weights(relevances: list, weights: list, n: int) -> list:
