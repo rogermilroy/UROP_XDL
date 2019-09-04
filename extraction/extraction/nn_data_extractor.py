@@ -79,12 +79,12 @@ class NNDataExtractor:
 
         self.send_json(json.dumps(mdata))
 
-    def extract_final_state(self, model_name, training_run_number, final_epochs, final_params, best_params_epoch):
+    def extract_final_state(self, model_name, training_run_number, final_epochs, final_model_state, best_params_epoch):
         mdata = dict()
         mdata['model_name'] = model_name
         mdata['training_run_number'] = training_run_number
         mdata['final_epochs'] = final_epochs
-        mdata['final_params'] = final_params
+        mdata['final_model_state'] = encode_model_state(final_model_state)
         mdata['best_params_epoch'] = best_params_epoch
     
         self.send_json(json.dumps(mdata))
