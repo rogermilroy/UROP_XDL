@@ -25,8 +25,7 @@ class NNDataExtractor:
     def extract_data(self, model_name: str, training_run_number: int, epoch: int,
                      epoch_minibatch: int, inputs: Tensor, model_state: dict, outputs: Tensor, targets: Tensor) -> None:
         """
-        TODO add link to training run.
-        Wrapper that encodes and sends data. Auto increments total minibatch number.
+        Encodes and sends data. Auto increments total minibatch number.
         :param epoch: int Number of times through dataset.
         :param epoch_minibatch: int The minibatch number within current epoch
         :param inputs: Tensor The inputs as a Tensor  # TODO link to original dataset.
@@ -35,12 +34,19 @@ class NNDataExtractor:
         :param targets: Tensor The target values of the model as a Tensor.
         :return: None
         """
-        self.send_json(data_to_json(model_name=model_name,
-                                    training_run_number=training_run_number, epoch=epoch,
-                                    epoch_minibatch=epoch_minibatch,
-                                    total_minibatch=self.total_minibatch_number,
-                                    inputs=inputs, model_state=model_state, outputs=outputs,
-                                    targets=targets))
+        data = dict()
+        data['model_name'] = model_name
+        data['training_run_number'] = training_run_number
+        data['epoch'] = epoch
+        data['epoch_minibatch'] = epoch_minibatch
+        data['total_minibatch'] = total_minibatch
+        data['inputs'] = encode_tensor(inputs)
+        data['outputs'] = encode_tensor(outputs)
+        data['targets'] = encode_tensor(targets)
+
+        data['model_state'] = encode_model_state(model_state)
+
+        self.send_json(json.dumps(data))
         self.total_minibatch_number += 1
 
     def extract_metadata(self, model_name: str, training_run_number: int, epochs: int,
@@ -60,11 +66,28 @@ class NNDataExtractor:
         :param metadata: dict Any other metadata to be stored.
         :return: None
         """
-        self.send_json(metadata_to_json(model_name=model_name,
-                                        training_run_number=training_run_number, epochs=epochs,
-                                        batch_size=batch_size,
-                                        cuda=cuda, model=model, criterion=criterion,
-                                        optimizer=optimizer, metadata=metadata))
+        mdata = dict()
+        mdata['model_name'] = model_name
+        mdata['training_run_number'] = training_run_number
+        mdata['epochs'] = epochs
+        mdata['batch_size'] = batch_size
+        mdata['cuda'] = cuda
+        mdata['model'] = str(model)
+        mdata['criterion'] = str(criterion)
+        mdata['optimizer'] = str(optimizer)
+        mdata['metadata'] = metadata
+
+        self.send_json(json.dumps(mdata))
+
+    def extract_final_state(self, model_name, training_run_number, final_epochs, final_params, best_params_epoch):
+        mdata = dict()
+        mdata['model_name'] = model_name
+        mdata['training_run_number'] = training_run_number
+        mdata['final_epochs'] = final_epochs
+        mdata['final_params'] = final_params
+        mdata['best_params_epoch'] = best_params_epoch
+    
+        self.send_json(json.dumps(mdata))
 
     def send_json(self, json_data: bytes) -> None:
         """
