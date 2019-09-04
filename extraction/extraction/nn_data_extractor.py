@@ -39,7 +39,7 @@ class NNDataExtractor:
         data['training_run_number'] = training_run_number
         data['epoch'] = epoch
         data['epoch_minibatch'] = epoch_minibatch
-        data['total_minibatch'] = total_minibatch
+        data['total_minibatch'] = self.total_minibatch_number
         data['inputs'] = encode_tensor(inputs)
         data['outputs'] = encode_tensor(outputs)
         data['targets'] = encode_tensor(targets)
