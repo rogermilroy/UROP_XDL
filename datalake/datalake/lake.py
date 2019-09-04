@@ -61,16 +61,14 @@ class LakeWorker:
                     self.flush_buffer()
                     counter = 0
             except ZMQError as e:
-                # Do nothing, we just haven't received anything.
+                # print("Time passed: ",time.time() - last_received)  debugging...
+                # if we don't receive anything for a while flush the buffer anyway.
+                if (time.time() - last_received) > self.max_wait:
+                    self.flush_buffer()
+                    # reset counters so we flush at most every max_wait seconds.
+                    last_received = time.time()
+                    counter = 0
                 # print(e)
-                pass
-            # print("Time passed: ",time.time() - last_received)  debugging...
-            # if we don't receive anything for a while flush the buffer anyway.
-            if (time.time() - last_received) > self.max_wait:
-                self.flush_buffer()
-                # reset counters so we flush at most every max_wait seconds.
-                last_received = time.time()
-                counter = 0
 
     def flush_buffer(self):
         """
