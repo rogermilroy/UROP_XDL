@@ -110,6 +110,8 @@ testing/processed
 testing/raw
 /processed
 /raw
+testing/MNIST
+testing/testing/MNIST
 
 # pycharm files
 .idea
