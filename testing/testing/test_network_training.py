@@ -86,7 +86,7 @@ def main():
     # Save metadata about the training run.
     metadata = {"early_stop_epochs": early_stop_epochs, "seed": seed}
 
-    extractor.extract_metadata(model_name="test_network", training_run_number=1, epochs=num_epochs,
+    extractor.extract_metadata(model_name="test_network", training_run_number=3, epochs=num_epochs,
                                batch_size=batch_size, cuda=use_cuda, model=model,
                                criterion=criterion, optimizer=optimizer, metadata=metadata)
 
@@ -130,7 +130,7 @@ def main():
             soft_out = functional.softmax(outputs, dim=1)
             # print(soft_out.shape)
 
-            extractor.extract_data(model_name="test_network", training_run_number=1,
+            extractor.extract_data(model_name="test_network", training_run_number=3,
                                    epoch=epoch+1, epoch_minibatch=minibatch_count+1,
                                    inputs=images, model_state=model.state_dict(),
                                    outputs=soft_out, targets=labels)
@@ -176,7 +176,7 @@ def main():
     if best_params is not None:
         model.load_state_dict(best_params)
     torch.save(best_params, "./MNIST_params_test")
-    extractor.extract_final_state(model_name="test_network", training_run_number=1, final_epochs=epoch+1, final_model_state=best_params, best_params_epoch=best_params_epoch)
+    extractor.extract_final_state(model_name="test_network", training_run_number=3, final_epochs=epoch+1, final_model_state=best_params, best_params_epoch=best_params_epoch)
     # test
     #total_test_loss, avg_test_loss = test(model, computing_device, test_loader, criterion)
     #print(total_test_loss, avg_test_loss)
