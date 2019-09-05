@@ -5,12 +5,22 @@ from torchvision.transforms import ToTensor
 from torchvision.datasets import MNIST
 from testing.test_dataloaders import create_split_loaders
 import torch
+import matplotlib.pyplot as plt
+
+
+def visualise_mnist_relevance(relevances:list):
+    relevance = relevances[-1].detach()
+    relevance = torch.reshape(relevance, (28, 28))
+    print(relevance.size())
+    plt.imshow(relevance)
+    plt.show()
 
 
 class TestRelevancePropagation(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model = TestFeedforwardNet()
+        self.model.load_state_dict(torch.load('../test_weights/MNIST_params'))
         transform = ToTensor()
         dataset = MNIST('.', download=True, transform=transform)
 
@@ -31,15 +41,15 @@ class TestRelevancePropagation(unittest.TestCase):
             if num == 1:
                 break
             batch = images
-        batch = torch.reshape(batch, (-1, 784))
-        self.model.forward(batch)
+        self.batch = torch.reshape(batch, (-1, 784))
+        self.model.forward(self.batch)
 
     def tearDown(self) -> None:
         pass
 
     def test_param_processing(self):
-        pass
-        # layerwise_relevance(model=self.model)
+        relevances, weights = layerwise_relevance(model=self.model, inputs=self.batch)
+        visualise_mnist_relevance(relevances)
 
     def test_linear_relevance(self):
         activations = torch.tensor([[0.7, 0.1, 0.3, 0.8]])
@@ -48,7 +58,7 @@ class TestRelevancePropagation(unittest.TestCase):
                                 [0., -2., 1., 0]]).t()
         relevances = torch.tensor([[0., 0.8, 0.]])
         self.assertTrue(-0.001 < float(torch.sum(linear_relevance(activations, weights,
-                                                                  relevances) -
+                                                                  relevances, 1.0, 0.0) -
                          torch.tensor([[0.3733, 0.0000, 0.0000, 0.4267]]))) < 0.001)
 
     def test_batch_linear_relevance(self):
@@ -59,5 +69,5 @@ class TestRelevancePropagation(unittest.TestCase):
                                 [0., -2., 1., 0]]).t()
         relevances = torch.tensor([[0., 0.8, 0.]])
         self.assertTrue(-0.001 < float(torch.sum(linear_relevance(activations, weights,
-                                                                  relevances)[1] -
+                                                                  relevances, 1.0, 0.0)[1] -
                          torch.tensor([[0.3200, 0.0000, 0.0000, 0.4800]]))) < 0.001)
