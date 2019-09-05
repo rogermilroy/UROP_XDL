@@ -44,7 +44,7 @@ def main():
     seed = np.random.seed(42)  # Seed the random number generator for reproducibility
     p_val = 0.1  # Percent of the overall dataset to reserve for validation
     p_test = 0.2  # Percent of the overall dataset to reserve for testing
-
+    
     # Check if your system supports CUDA
     use_cuda = torch.cuda.is_available()
 
@@ -59,10 +59,10 @@ def main():
         print("CUDA NOT supported")
 
     # Setup the training, validation, and testing dataloaders
-    train_loader, val_loader, test_loader = create_split_loaders(MNIST(root=os.getcwd(),
+    train_loader, val_loader, test_loader = create_split_loaders(dataset=MNIST(root=os.getcwd(),
                                                                        transform=ToTensor(),
                                                                        download=True),
-                                                                 batch_size, seed,
+                                                                 batch_size=batch_size, seed=seed,
                                                                  p_val=p_val, p_test=p_test,
                                                                  shuffle=True, extras=extras)
 
@@ -86,7 +86,7 @@ def main():
     # Save metadata about the training run.
     metadata = {"early_stop_epochs": early_stop_epochs, "seed": seed}
 
-    extractor.extract_metadata(model_name="test_network", training_run_number=1, epochs=num_epochs,
+    extractor.extract_metadata(model_name="test_network", training_run_number=3, epochs=num_epochs,
                                batch_size=batch_size, cuda=use_cuda, model=model,
                                criterion=criterion, optimizer=optimizer, metadata=metadata)
 
@@ -100,10 +100,11 @@ def main():
     # Begin training procedure
     for epoch in range(num_epochs):
 
-        N = 50
+        N = 200
         N_minibatch_loss = 0.0
         current_best_val = 10000000.0
         increasing_epochs = 0
+        best_params_epoch = 0
 
         # Get the next minibatch of images, labels for training
         torch.cuda.empty_cache()
@@ -129,7 +130,7 @@ def main():
             soft_out = functional.softmax(outputs, dim=1)
             # print(soft_out.shape)
 
-            extractor.extract_data(model_name="test_network", training_run_number=1,
+            extractor.extract_data(model_name="test_network", training_run_number=3,
                                    epoch=epoch+1, epoch_minibatch=minibatch_count+1,
                                    inputs=images, model_state=model.state_dict(),
                                    outputs=soft_out, targets=labels)
@@ -152,21 +153,20 @@ def main():
                 avg_minibatch_loss.append(N_minibatch_loss)
                 N_minibatch_loss = 0.0
 
-            # validate every 2 N minibatches.
-            if minibatch_count % (2 * N) == 0 and minibatch_count != 0:
 
-                # validation
-                total_val_loss, avg_val_loss = test(model, computing_device, val_loader, criterion)
-                if total_val_loss < current_best_val:
-                    current_best_val = total_val_loss
-                    best_params = model.state_dict()
-                    increasing_epochs = 0
-                else:
-                    increasing_epochs += 1
-                if increasing_epochs > early_stop_epochs:
-                    break
+        # validation
+        total_val_loss, avg_val_loss = test(model, computing_device, val_loader, criterion)
+        if total_val_loss < current_best_val:
+            current_best_val = total_val_loss
+            best_params = model.state_dict()
+            best_params_epoch = epoch
+            increasing_epochs = 0
+        else:
+            increasing_epochs += 1
+        if increasing_epochs > early_stop_epochs:
+            break
 
-                print(total_val_loss, avg_val_loss)
+        print(total_val_loss, avg_val_loss)
 
         print("Finished", epoch + 1, "epochs of training")
 
@@ -175,9 +175,11 @@ def main():
 
     if best_params is not None:
         model.load_state_dict(best_params)
+    torch.save(best_params, "./MNIST_params_test")
+    extractor.extract_final_state(model_name="test_network", training_run_number=3, final_epochs=epoch+1, final_model_state=best_params, best_params_epoch=best_params_epoch)
     # test
-    total_test_loss, avg_test_loss = test(model, computing_device, test_loader, criterion)
-    print(total_test_loss, avg_test_loss)
+    #total_test_loss, avg_test_loss = test(model, computing_device, test_loader, criterion)
+    #print(total_test_loss, avg_test_loss)
 
 
 if __name__ == '__main__':
