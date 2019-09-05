@@ -65,6 +65,7 @@ class LakeWorker:
                 # if we don't receive anything for a while flush the buffer anyway.
                 if (time.time() - last_received) > self.max_wait:
                     self.flush_buffer()
+                    print("Flush database")
                     # reset counters so we flush at most every max_wait seconds.
                     last_received = time.time()
                     counter = 0
@@ -75,10 +76,9 @@ class LakeWorker:
         Sends all data stored in the buffer to the db and clears the buffer.
         :return: None
         """
-        print("Flush database")
         for col, data in self.buffer.items():
             result = self.db[col].insert_many(data)
-            print("Inserted to database")
+            # print("Inserted to database")
         self.buffer = dict()
 
 
