@@ -64,3 +64,10 @@ class TestPathSelection(unittest.TestCase):
                     tensor([1.78, 0.14, 0.75, 0.94, 0.37, 1.87, 0.28, 1.26, 0.69, 0.80, 1.9, 0.12])]
         ref = [[[0, 4], [4, 0]], [[0, 4], [4, 5]], [[0, 6], [6, 7]], [[0, 6], [6, 10]]]
         self.assertEqual(ref, band_selection(test_rel, list(), 2))
+
+    def visualise_differences(self):
+        """
+        Visualise the differences in path selection across the methods on the same network.
+        :return:
+        """
+        pass
