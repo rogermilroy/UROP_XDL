@@ -1,5 +1,5 @@
 # Utils for analysis module.
-
+import torch
 from copy import deepcopy
 from heapq import heappush, heapreplace
 
@@ -118,3 +118,34 @@ def path_to_weights(path: list) -> list:
     for i in range(len(path) - 1):
         weights.append([path[i][0], path[i+1][0]])
     return weights
+
+
+def find_index(tensor: Tensor, index: list) -> Tensor:
+    """
+    This function is annoying but necessary because its not built into torch or numpy or anywhere.
+    :param tensor: Tensor The tensor containing the item.
+    :param index: list The index of the item.
+    :return: Tensor The item.
+    """
+    dims = len(index)
+    if dims == 1:
+        return tensor[index[0]]
+    elif dims == 2:
+        return tensor[index[0], index[1]]
+    elif dims == 3:
+        return tensor[index[0], index[1], index[2]]
+    elif dims == 4:
+        return tensor[index[0], index[1], index[2], index[3]]
+
+
+def find_indices(tensor: Tensor, indices: list) -> list:
+    """
+    Finds a list of indices in a given Tensor.
+    :param tensor: Tensor The tensor containing the items.
+    :param indices: list The indices of the items
+    :return: list A list of the items
+    """
+    w = list()
+    for index in indices:
+        w.append(find_index(tensor=tensor, index=index))
+    return w
