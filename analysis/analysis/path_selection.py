@@ -30,7 +30,7 @@ def band_selection(relevances: list, weights: list, n: int) -> list:
     Returns indices of weights per layer.
     :param relevances: list of Tensors. Relevance values for neurons.
     :param weights: list of Tensors. Weights.
-    :param n: int TODO decide exactly what n will decide. Total paths? paths per layer?
+    :param n: int The branching factor or band width.
     :return: List of indices.
     """
     # select largest n*layer neurons per layer. using largest n
