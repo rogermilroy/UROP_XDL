@@ -9,6 +9,7 @@ setup(
         'torch>=1.1.0',
         'torchvision>=0.2.1',
         'pyzmq>=18.0.2',
-        'pymongo>=3.8.0'
+        'pymongo>=3.8.0',
+        'ujson>=1.35'
     ],
 )

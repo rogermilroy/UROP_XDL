@@ -3,6 +3,7 @@ from utils.data_processing import *
 from torch import Tensor
 import torch
 import zmq
+import ujson as json
 
 
 class NNDataExtractor:
