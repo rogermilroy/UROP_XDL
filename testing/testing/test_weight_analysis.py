@@ -71,4 +71,4 @@ class TestWeightAnalysis(unittest.TestCase):
         self.assertTrue(torch.allclose(ref, pos_neg_diff(self.t, self.t_1, self.final)))
 
     def test_analyse_decision(self):
-        analyse_decision(self.model, self.batch, "band", 3, "mongodb://localhost:27017/", "test_network1")
+        analyse_decision(self.model, self.batch, "band", "pos_neg", 3, "mongodb://localhost:27017/", "test_network1")

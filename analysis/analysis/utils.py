@@ -5,6 +5,7 @@ from heapq import heappush, heapreplace
 
 from heapq_max import heappush_max, heapreplace_max
 from torch import Tensor
+import re
 
 
 def recurse_large_pos(tensor: Tensor, top: list, indices: list, n: int, dim: int) -> list:
@@ -149,3 +150,18 @@ def find_indices(tensor: Tensor, indices: list) -> list:
     for index in indices:
         w.append(find_index(tensor=tensor, index=index))
     return w
+
+
+def weights_from_model_state(model_state: dict) -> list:
+    # extracts the weights from the model state
+    weights = [None] * len(model_state)
+    for param, tensor in model_state.items():
+        # find returns -1 if not present
+        if param.find("weight") != -1:
+            # look for the number as usually something like 'layer1.weight'
+            nums = re.findall(r'\d+', param)
+            if len(nums) != 1:
+                raise Exception("Some issue with parameter numbering.")
+            else:
+                weights.insert(nums[0] - 1, tensor)
+    return weights
