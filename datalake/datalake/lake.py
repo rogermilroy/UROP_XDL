@@ -3,7 +3,7 @@ from zmq import ZMQError
 from multiprocessing import Process
 import argparse
 import pymongo
-import zmq.utils.jsonapi as json
+import ujson as json
 import time
 
 
@@ -93,7 +93,7 @@ class LakeCoordinator:
         self.max_wait = max_wait
         # max number of data dicts each process can store. Highly dependant on available RAM and
         # data size
-        self.process_capacity = capacity //self.max_processes
+        self.process_capacity = capacity // self.max_processes
 
     def start_lake(self):
         """
@@ -130,8 +130,10 @@ if __name__ == '__main__':
                                                    "available and the size of the network being "
                                                    "trained. Be cautious and test to find the "
                                                    "optimal amount.")
-    parser.add_argument('--max_wait', type=float, help="The max time (in seconds) to wait after last data received "
-                                                   "before writing current buffer to MongoDB. Default is 5s.", default=5)
+    parser.add_argument('--max_wait', type=float, help="The max time (in seconds) to wait after "
+                                                       "last data received  before writing "
+                                                       "current buffer to MongoDB. Default is 5s.",
+                                                       default=5)
     args = parser.parse_args()
     lake = LakeCoordinator(source_address=args.address, max_processes=args.processes,
                            capacity=args.capacity, max_wait=args.max_wait)
