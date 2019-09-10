@@ -3,6 +3,7 @@ import torch
 from torch import Tensor
 from analysis.relevance_propagation import layerwise_relevance
 from analysis.path_selection import *
+from analysis.utils import *
 import pymongo
 
 # creating indices? Maybe in datalake code?
@@ -98,9 +99,16 @@ def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_co
     diffs = list()
     # iterate over all the minibatches.
     for i in range(items -1):
+        if i == 2:
+            # only do a few for testing.
+            break
         # get the weights from the model state!
-        
+        weights1 = weights_from_model_state(cursor[i])
+        weights2 = weights_from_model_state(cursor[i+1])
+        # TODO maybe add the minibatch number in a tuple?
         # analyse the difference between this minibatch and the one before. i -> i+1
-        diffs.append(analysis_func[analysis]( ))
+        diffs.append(analysis_func[analysis](current=weights1, past=weights2, final=weights))
+    
+    print(diffs)
 
     pass
