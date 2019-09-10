@@ -10,6 +10,7 @@ setup(
         'torchvision>=0.2.1',
         'pyzmq>=18.0.2',
         'tqdm>=4.31.1',
-        'pandas>=0.23.4'
+        'pandas>=0.23.4',
+        'rapidjson>=1.0.0'
     ],
 )
