@@ -75,9 +75,10 @@ def pos_neg_diff(current: Tensor, past: Tensor, final: Tensor) -> Tensor:
 
 
 # analysis of a large number (maybe all minibatches)
-def analyse_decision(model, inputs, selection: str, n: int, db_conn_string: str, collection:str):
+def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_conn_string: str, collection:str):
     selection_func = {"band": band_selection,  "top_weights": top_weights,
                       "relevant_neurons": top_relevant_neurons}
+    analysis_func = {"avg": avg_diff, "total": total_diff, "pos_neg": pos_neg_diff}
 
     # connect to mongodb db.
     db = pymongo.MongoClient(db_conn_string).training_data
@@ -89,7 +90,17 @@ def analyse_decision(model, inputs, selection: str, n: int, db_conn_string: str,
     weight_indices = selection_func[selection](weights, relevances, n)
 
     # pull data from db
-    db[collection].find({"total_minibatch": {"$exists": True}},
-                        {"total_minibatch", "model_state"}).sort({"total_minibatch": -1})
+    # TODO speed up the count_documents call currently arount 6s.
+    items = db[collection].count_documents({'total_minibatch': {"$exists": True}})
+    cursor = db[collection].find({"total_minibatch": {"$exists": True}},
+                        {"total_minibatch", "model_state", "inputs"}).sort('total_minibatch', pymongo.DESCENDING)
+    
+    diffs = list()
+    # iterate over all the minibatches.
+    for i in range(items -1):
+        # get the weights from the model state!
+        
+        # analyse the difference between this minibatch and the one before. i -> i+1
+        diffs.append(analysis_func[analysis]( ))
 
     pass
