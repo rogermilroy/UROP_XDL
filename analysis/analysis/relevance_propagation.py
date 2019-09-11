@@ -65,6 +65,12 @@ def layerwise_relevance(model, inputs) -> tuple:
     Carries out the layer-wise relevance propagation procedure
     ref
     and returns the relevance's.
+    Assumptions: 
+    1. The model is in the state immediately after the decision is made. 
+    This is to preserve the activations.
+    2. The model used is using the pattern established of storing activations
+    per layer in an ordered dict called activations.
+    3. The model is for classification.
     :param model: The model (Neural Network)
     :param inputs: The inputs to the model.
     :return: dict The relevance values per layer as a dict of Tensors.
@@ -90,6 +96,7 @@ def layerwise_relevance(model, inputs) -> tuple:
     # TODO think about conv dimensions.
 
     relevances = list()
+    # this is to establish the outputs from the activations.
     layers[0] = func.softmax(layers[0])
     mask = torch.zeros_like(layers[0])
     mask[0, torch.argmax(layers[0])] = 1.
