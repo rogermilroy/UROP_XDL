@@ -23,7 +23,7 @@ def decode_model_state(model_state: dict) -> dict:
     :return: dict containing weight and bias Tensors.
     """
     state = dict()
-    for key, value in model_state:
+    for key, value in model_state.items():
         rkey = key.replace('_dot_', '.')
         state[rkey] = decode_tensor(value)
     return state
@@ -63,7 +63,7 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     """
     if not isinstance(tensor_dict, dict):
         raise TypeError("Must be a dict.")
-    tens = torch.tensor(np.array(tensor_dict["data"])).to(tensor_dict["dtype"])
+    tens = torch.tensor(np.array(tensor_dict["data"]))#.to(tensor_dict["dtype"]) TODO fix this.
     if tensor_dict["device"] == str(torch.device("cuda")) and torch.cuda.is_available():
         tens = tens.to(tensor_dict["device"])
     # TODO reconstruct sparse tensor from dense.
