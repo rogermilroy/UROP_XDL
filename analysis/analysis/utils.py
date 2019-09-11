@@ -52,6 +52,7 @@ def recurse_large_neg(tensor: Tensor, top: list, indices: list, n: int, dim: int
     """
     Recursive function to find the largest n negative items in an n dimensional tensor, with the
     indices of their position within it.
+    Output format: heap[[index 0] ... [index n]]
     :param tensor: the Tensor within which we are searching.
     :param top: list A heap containing the largest items and their indices
     :param indices: list The current index to be examined.
@@ -92,6 +93,7 @@ def all_weights(l1: list, l2: list) -> list:
     """
     Method that assembles the indices of the weights connecting the neurons indexed in the two
     lists.
+    Output format [[weight index 0] .. [weight index n]]
     :param l1: list Indices of neurons.
     :param l2: list Indices of neurons.
     :return: list Indices of weights.
@@ -112,6 +114,7 @@ def path_to_weights(path: list) -> list:
     """
     Takes a list of neurons and returns the weights that connect them.
     TODO think about multidimensional inputs.
+    Output format: [[weight index layer1] .. [weight index layer n]]
     :param path: list A list of neuron indices.
     :return: list A list of weight indices.
     """
@@ -120,10 +123,20 @@ def path_to_weights(path: list) -> list:
         weights.append([path[i][0], path[i+1][0]])
     return weights
 
+def paths_to_layers(paths: list) -> list:
+    """
+    Converts indices of weights from being organised by path through a network to being organised
+    by layer from output to input.
+    :param paths: A list of paths through the network
+    :return: A list of weight indices by layer.
+    """
+
+
 
 def find_index(tensor: Tensor, index: list) -> Tensor:
     """
     This function is annoying but necessary because its not built into torch or numpy or anywhere.
+    Input format: index: [index dim 0 .. index dim n]
     :param tensor: Tensor The tensor containing the item.
     :param index: list The index of the item.
     :return: Tensor The item.
@@ -142,8 +155,9 @@ def find_index(tensor: Tensor, index: list) -> Tensor:
 def find_indices(tensor: Tensor, indices: list) -> list:
     """
     Finds a list of indices in a given Tensor.
+    Input format: indices: [[index 0] .. [index n]]
     :param tensor: Tensor The tensor containing the items.
-    :param indices: list The indices of the items
+    :param indices: list A list of indices of the items
     :return: list A list of the items
     """
     w = list()
@@ -152,20 +166,33 @@ def find_indices(tensor: Tensor, indices: list) -> list:
     return w
 
 
-def get_indices_from_weights(weights: list, indices: list):
-    # Assumption is that weights are a list of Tensors in the correct order.
-    # And that indices is a 3 dimensional list
+def extract_weights(weights_list: list, indices_list: list) -> Tensor:
+    """
+    Selects individual weights from a list of weights.
+    Input format:  weights: [tensor(output layer) ... tensor(input layer)]
+                   indices: [[[index 0 output layer].. [index n output layer]] .. [index 0
+                   input layer].. [index n input layer]]]
+    :param weights:
+    :param indices:
+    :return: Tensor. The selected weights in a flat tensor.
+    """
     w = list()
-    # print("Weights: ",weights)
-    # print(len(weights))
-    for i in range(len(weights)):
-        print("Tensor: ", weights[i].size())
-        print("Indices: ", indices[i])
-        w.append(find_indices(weights[i], indices[i]))
-    return torch.tensor(w)
+    layers = len(weights_list)
+    for i in range(layers):
+        layer = weights_list[i]
+        layer_indices = indices_list[i]
+        w.append(find_indices(tensor=layer, indices=layer_indices))
+    return torch.tensor(w).flatten()
 
 
 def weights_from_model_state(model_state: dict) -> list:
+    """
+    Extracts the weights from the model state dict into a list of weight layers.
+    For artifacts extracted from MongoDB.
+    Output format: [tensor(output_layer) .. tensor(input layer)]
+    :param model_state: dict. The model state dict of some model. Usually taken from storage.
+    :return: list. A list of weight tensors.
+    """
     # extracts the weights from the model state
     weights = [None] * len(model_state)
     for param, tensor in model_state.items():
