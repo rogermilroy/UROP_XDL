@@ -152,10 +152,24 @@ def find_indices(tensor: Tensor, indices: list) -> list:
     return w
 
 
+def get_indices_from_weights(weights: list, indices: list):
+    # Assumption is that weights are a list of Tensors in the correct order.
+    # And that indices is a 3 dimensional list
+    w = list()
+    # print("Weights: ",weights)
+    # print(len(weights))
+    for i in range(len(weights)):
+        print("Tensor: ", weights[i].size())
+        print("Indices: ", indices[i])
+        w.append(find_indices(weights[i], indices[i]))
+    return torch.tensor(w)
+
+
 def weights_from_model_state(model_state: dict) -> list:
     # extracts the weights from the model state
     weights = [None] * len(model_state)
     for param, tensor in model_state.items():
+        # print(param)
         # find returns -1 if not present
         if param.find("weight") != -1:
             # look for the number as usually something like 'layer1.weight'
@@ -163,5 +177,8 @@ def weights_from_model_state(model_state: dict) -> list:
             if len(nums) != 1:
                 raise Exception("Some issue with parameter numbering.")
             else:
-                weights.insert(nums[0] - 1, tensor)
+                weights.insert(int(nums[0]) - 1, tensor)
+    
+    weights = [x for x in reversed(weights) if x is not None]
+    # print(weights)
     return weights
