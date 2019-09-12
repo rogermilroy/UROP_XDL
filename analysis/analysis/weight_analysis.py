@@ -89,15 +89,16 @@ def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_co
     relevances, weights = layerwise_relevance(model=model, inputs=inputs)
 
     # select weights (indices)
-    weight_indices = selection_func[selection](weights, relevances, n)
+    weight_indices = selection_func[selection](relevances=relevances, weights=weights, n=n)
 
-    final_weights = get_indices_from_weights(weights, weight_indices)
+    final_weights = extract_weights(weights, weight_indices)
     # pull data from db
-    # TODO speed up the count_documents call currently arount 6s.
-    items = db[collection].count_documents({'total_minibatch': {"$exists": True}}, hint='total_minibatch_1')
+    items = db[collection].count_documents({'total_minibatch': {"$exists": True}},
+                                           hint='total_minibatch_1')
     print(items)
     cursor = db[collection].find({"total_minibatch": {"$exists": True}},
-                        {"total_minibatch", "model_state", "inputs"}).sort('total_minibatch', pymongo.DESCENDING)
+                                 {"total_minibatch", "model_state", "inputs"}).sort(
+                                                            'total_minibatch', pymongo.DESCENDING)
     
     diffs = list()
     # iterate over all the minibatches.
@@ -108,15 +109,15 @@ def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_co
         # get the weights from the model state!
         model1 = decode_model_state(cursor[i]['model_state'])
         model2 = decode_model_state(cursor[i+1]['model_state'])
-        weights1 = get_indices_from_weights(weights_from_model_state(model1), weight_indices)
-        weights2 = get_indices_from_weights(weights_from_model_state(model2), weight_indices)
+        weights1 = extract_weights(weights_from_model_state(model1), weight_indices)
+        weights2 = extract_weights(weights_from_model_state(model2), weight_indices)
         print("Weights1.size: ",weights1.size())
         print("Weights2.size: ",weights2.size())
         print("Final weights.size: ",final_weights.size())
         # TODO maybe add the minibatch number in a tuple?
         # analyse the difference between this minibatch and the one before. i -> i+1
         diffs.append(analysis_func[analysis](current=weights1, past=weights2, final=final_weights))
-    
+
     print(diffs)
 
     pass
