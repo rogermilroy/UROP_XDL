@@ -123,14 +123,26 @@ def path_to_weights(path: list) -> list:
         weights.append([path[i][0], path[i+1][0]])
     return weights
 
+
 def paths_to_layers(paths: list) -> list:
     """
     Converts indices of weights from being organised by path through a network to being organised
     by layer from output to input.
+    Input format: paths: [[[index layer 0 path 0] .. [index layer n path 0]] .. [index layer n
+    path 0]..[index layer n path n]]
+    Output format: [[[index 0 layer 0] .. [index n layer n]] .. [[index 0 layer n] .. [index n
+    layer n]]]
     :param paths: A list of paths through the network
     :return: A list of weight indices by layer.
     """
-
+    depth = len(paths[0])
+    layers = list()
+    for j in range(depth):
+        layers.append(list())
+    for path in paths:
+        for i in range(depth):
+            layers[i].append(path[i])
+    return layers
 
 
 def find_index(tensor: Tensor, index: list) -> Tensor:
@@ -209,3 +221,9 @@ def weights_from_model_state(model_state: dict) -> list:
     weights = [x for x in reversed(weights) if x is not None]
     # print(weights)
     return weights
+
+
+if __name__ == '__main__':
+    paths = [[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[4, 5, 6], [5, 6, 7], [7, 8, 9]],
+             [[8, 9, 10], [9, 10, 11], [10, 11, 12]]]
+    paths_to_layers(paths)
