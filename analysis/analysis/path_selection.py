@@ -66,7 +66,7 @@ def band_selection(relevances: list, weights: list, n: int) -> list:
     # TODO Need to check for narrower sections and potentially saturating the neurons
     # make n the maximum branching factor.
 
-    return paths
+    return paths_to_layers(paths)
 
 
 def top_weights(relevances: list, weights: list, n: int) -> list:
@@ -102,21 +102,3 @@ def top_relevant_neurons(relevances: list, weights: list, n: int) -> list:
     for i in range(len(most_relev) - 1):
         result.append(all_weights(most_relev[i], most_relev[i+1]))
     return result
-
-
-def extract_weights(weights_list: list, indices_list: list) -> Tensor:
-    """
-    Takes the indices of the weights desired and assembles them into a Tensor for further
-    processing.
-    :param weights_list: list A list of Tensors containing the weights between layers.
-    :param indices_list: list A list of lists containing the indices of the weights we are
-    interested in.
-    :return: Tensor A Tensor of weights.
-    """
-    w = list()
-    layers = len(weights_list)
-    for i in range(layers):
-        layer = weights_list[i]
-        layer_indices = indices_list[i]
-        w.append(find_indices(tensor=layer, indices=layer_indices))
-    return torch.tensor(w).flatten()
