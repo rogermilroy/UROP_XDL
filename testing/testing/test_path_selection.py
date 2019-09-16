@@ -1,5 +1,6 @@
 import unittest
-
+import torch
+from analysis.utils import extract_weights
 from analysis.path_selection import *
 from torch import tensor
 
@@ -62,7 +63,7 @@ class TestPathSelection(unittest.TestCase):
         test_rel = [tensor([2., 0.3, 0.8, 0.3, 1.1, 0.1, 0.09]),
                     tensor([0.1, 0.2, 0.9, 0.4, 2., 0.85, 1.3, 0.65, 0.72, 1.11]),
                     tensor([1.78, 0.14, 0.75, 0.94, 0.37, 1.87, 0.28, 1.26, 0.69, 0.80, 1.9, 0.12])]
-        ref = [[[0, 4], [4, 0]], [[0, 4], [4, 5]], [[0, 6], [6, 7]], [[0, 6], [6, 10]]]
+        ref = [[[0, 4], [0, 4], [0, 6], [0, 6]], [[4, 0], [4, 5], [6, 7], [6, 10]]]
         self.assertEqual(ref, band_selection(test_rel, list(), 2))
 
     def test_extract_weights(self):

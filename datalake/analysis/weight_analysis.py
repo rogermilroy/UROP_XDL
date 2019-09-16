@@ -2,8 +2,8 @@
 import torch
 from torch import Tensor
 from analysis.relevance_propagation import layerwise_relevance
-from analysis.path_selection import *
 from analysis.utils import *
+from analysis.path_selection import *
 from utils.data_processing import decode_model_state
 import pymongo
 

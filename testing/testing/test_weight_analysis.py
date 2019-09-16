@@ -1,5 +1,6 @@
 import unittest
 
+import torch
 from analysis.weight_analysis import *
 from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet
