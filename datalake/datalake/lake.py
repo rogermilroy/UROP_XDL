@@ -13,9 +13,12 @@ def lake_worker(address: str, db_conn_string: str, capacity: int, max_wait: floa
     :param address: str The address of the zmq socket we are listening to.
     :param db_conn_string: str The connection string of the MongoDB instance we are saving to.
     :param capacity: int The maximum number of data dicts we can buffer before saving to db.
+    :param max_wait: float The maximum time in seconds to wait after the last data to flush the
+    buffer.
     :return: None.
     """
-    worker = LakeWorker(address=address, db_conn_string=db_conn_string, capacity=capacity, max_wait=max_wait)
+    worker = LakeWorker(address=address, db_conn_string=db_conn_string, capacity=capacity,
+                        max_wait=max_wait)
     worker.work()
 
 
@@ -31,6 +34,9 @@ class LakeWorker:
         self.buffer = dict()
         self.capacity = capacity
         self.max_wait = max_wait
+        # NOTE this dict is never cleared so will cause crashes once it gets too big.
+        self.index_state = dict()
+        self.all_indexed = True
 
     def work(self):
         """
@@ -60,6 +66,11 @@ class LakeWorker:
                 if counter == self.capacity:
                     self.flush_buffer()
                     counter = 0
+                # If its a new training run start tracking the index state.
+                # set global indexed state as false.
+                if col not in self.index_state:
+                    self.index_state[col] = False
+                    self.all_indexed = False
             except ZMQError as e:
                 # print("Time passed: ",time.time() - last_received)  debugging...
                 # if we don't receive anything for a while flush the buffer anyway.
@@ -69,9 +80,13 @@ class LakeWorker:
                     # reset counters so we flush at most every max_wait seconds.
                     last_received = time.time()
                     counter = 0
+                    # use this opportunity to check indices and create them if not created.
+                    if not self.all_indexed:
+                        # create index on those that aren't indexed already and set index created.
+                        self.index_collections()
                 # print(e)
 
-    def flush_buffer(self):
+    def flush_buffer(self) -> None:
         """
         Sends all data stored in the buffer to the db and clears the buffer.
         :return: None
@@ -81,11 +96,21 @@ class LakeWorker:
             # print("Inserted to database")
         self.buffer = dict()
 
+    def index_collections(self) -> None:
+        for collection, indexed in self.index_state:
+            if not indexed:
+                # TODO verify.
+                self.db[collection].create_index('total_minibatch', partialFilterExpression={
+                    'total_minibatch': {'$exists': True}})
+                self.index_state[collection] = True
+        self.all_indexed = True
+
 
 class LakeCoordinator:
 
     def __init__(self, source_address: str, max_processes: int,
-                 db: str = "mongodb://localhost:27017/", capacity: int = 100, max_wait: float = 5):
+                 db: str = "mongodb://localhost:27017/", capacity: int = 100, max_wait: float =
+                 5) -> None:
         self.source_address = source_address
         self.max_processes = max_processes
         self.processes = list()
@@ -95,7 +120,7 @@ class LakeCoordinator:
         # data size
         self.process_capacity = capacity // self.max_processes
 
-    def start_lake(self):
+    def start_lake(self) -> None:
         """
         Starts all the processes.
         :return: None
@@ -105,7 +130,7 @@ class LakeCoordinator:
             p.start()
             self.processes.append(p)
 
-    def end_lake(self):
+    def end_lake(self) -> None:
         """
         Stop all the processes.
         :return: None
