@@ -24,5 +24,5 @@ class MinibatchData(Resource):
         else:
             abort(404, message="Minibatch {} of type {} in training_run {} doesn't appear to be in "
                                "the database right now.".format(args['minibatch'],
-                                                                args[type],
+                                                                args['type'],
                                                                 args['training_run']))
