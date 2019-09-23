@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='datalake',
-    packages=['datalake'],
+    packages=['analysis', 'datalake'],
     include_package_data=True,
     install_requires=[
         'numpy>=1.14.5',
