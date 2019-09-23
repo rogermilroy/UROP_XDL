@@ -3,6 +3,7 @@ from flask import Flask, send_from_directory, render_template
 from flask_restful import reqparse, Resource, Api
 from visualisation.server.resources.full_run_data import FullRunData
 from visualisation.server.resources.minibatch_data import MinibatchData
+from visualisation.server.resources.training_runs import TrainingRuns
 
 # main script for starting and running the server.
 
@@ -21,6 +22,7 @@ api = Api(app)
 # add resources to the app to serve the data.
 api.add_resource(FullRunData, '/api/full_run')
 api.add_resource(MinibatchData, '/api/minibatch')
+api.add_resource(TrainingRuns, '/api/training_runs')
 
 
 if __name__ == '__main__':
