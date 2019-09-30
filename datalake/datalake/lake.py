@@ -125,21 +125,12 @@ class LakeWorker:
             # exit immediately as we have already flushed the buffer.
             exit(code=1)
 
-    # def index_collections(self) -> None:
-    #     for collection, indexed in self.index_state:
-    #         if not indexed:
-    #             # TODO verify.
-    #             self.db[collection].create_index('total_minibatch', partialFilterExpression={
-    #                 'total_minibatch': {'$exists': True}})
-    #             self.index_state[collection] = True
-    #     self.all_indexed = True
-
 
 class LakeCoordinator:
 
     def __init__(self, source_address: str, max_processes: int,
                  db: str = "mongodb://localhost:27017/", capacity: int = 100,
-                 max_wait: float = 5) -> None:
+                 max_wait: float = 5.) -> None:
         self.source_address = source_address
         self.max_processes = max_processes
         self.processes = list()
@@ -161,7 +152,7 @@ class LakeCoordinator:
         """
         for i in range(self.max_processes):
             p = Process(target=lake_worker,
-                        args=(self.source_address, self.db_conn_string,
+                        args=(self.source_address, self.ipc_address, self.db_conn_string,
                               self.process_capacity, self.max_wait),
                         daemon=True)
             p.start()
@@ -249,7 +240,7 @@ def main():
     parser.add_argument('--max_wait', type=float, help="The max time (in seconds) to wait after "
                                                        "last data received  before writing "
                                                        "current buffer to MongoDB. Default is 5s.",
-                        default=5)
+                        default=5.)
     # parser.add_argument('--indices' ) TODO up to multiple inputs.
     args = parser.parse_args()
     lake = LakeCoordinator(source_address=args.address, max_processes=args.processes,
