@@ -19,7 +19,7 @@ git clone https://github.com/rogermilroy/UROP_XDL.git
 cd UROP_XDL
 
 # switch to current development branch
-git checkout implement-datalake
+git checkout visualise
 
 pip3 install --user -e ./extraction
 pip3 install --user -e ./utils
