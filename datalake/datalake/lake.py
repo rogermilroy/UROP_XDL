@@ -170,7 +170,7 @@ class LakeCoordinator:
         # allow some time to exit and check.
         while time.time() - start_time < timeout :
             for p in self.processes:
-                if p.exitcode() is not None:
+                if p.exitcode is not None:
                     self.processes.remove(p)
             # if they have all exited we have nothing left to do.
             if len(self.processes) > 0:
