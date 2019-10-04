@@ -10,6 +10,7 @@ import ujson as json
 from analysis.weight_analysis import analyse_decision
 # import argparse
 import time
+import pymongo
 
 
 def temporary_analysis(selection: str, analysis: str, n: int, training_run: str):
@@ -23,8 +24,12 @@ def temporary_analysis(selection: str, analysis: str, n: int, training_run: str)
     publish.bind('tcp://' + str(get_ip()) + ':' + '5556')
     print(str(get_ip()) + ':' + '5556')
 
+    db = pymongo.MongoClient("mongodb://localhost:27017/").training_data
+    model_state = db[training_run].find_one({'final_model_state': {'$exists': True}},
+                                            {'final_model_state'})
+
     model = TestFeedforwardNet()
-    model.load_state_dict(torch.load('../test_weights/MNIST_params'))  # TODO fetch from db?
+    model.load_state_dict(model_state)
     transform = ToTensor()
     dataset = MNIST('.', download=True, transform=transform)
 
