@@ -1,7 +1,7 @@
 import math
 import torch
 
-from analysis.utils import *
+from analysis.analysis_utils import *
 
 
 def largest_n(tensor: Tensor, n: int, pos: bool, in_order: bool = False, desc: bool = True) -> list:

@@ -1,6 +1,6 @@
 import unittest
 import torch
-from analysis.utils import extract_weights
+from analysis.analysis_utils import extract_weights
 from analysis.path_selection import *
 from torch import tensor
 

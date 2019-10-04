@@ -2,7 +2,7 @@
 import torch
 from torch import Tensor
 from analysis.relevance_propagation import layerwise_relevance
-from analysis.utils import *
+from analysis.analysis_utils import *
 from analysis.path_selection import *
 from utils.data_processing import decode_model_state
 import pymongo
@@ -77,13 +77,19 @@ def pos_neg_diff(current: Tensor, past: Tensor, final: Tensor) -> Tensor:
 
 
 # analysis of a large number (maybe all minibatches)
-def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_conn_string: str, collection:str):
+def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_conn_string: str,
+                     collection: str):
     selection_func = {"band": band_selection,  "top_weights": top_weights,
                       "relevant_neurons": top_relevant_neurons}
     analysis_func = {"avg": avg_diff, "total": total_diff, "pos_neg": pos_neg_diff}
 
     # connect to mongodb db.
     db = pymongo.MongoClient(db_conn_string).training_data
+
+    # model_state = db[collection].find_one({'final_model_state': {'$exists': True}},
+    #                                  {'final_model_state'})
+    # TODO instatiate model from saved information. Run inputs through to reconstruct model.
+    # TODO pickles
 
     # compute relevances.
     relevances, weights = layerwise_relevance(model=model, inputs=inputs)
@@ -96,6 +102,7 @@ def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_co
     items = db[collection].count_documents({'total_minibatch': {"$exists": True}},
                                            hint='total_minibatch_1')
     print(items)
+    # TODO zip with list of minibatch number?
     cursor = db[collection].find({"total_minibatch": {"$exists": True}},
                                  {"total_minibatch", "model_state", "inputs"}).sort(
                                                             'total_minibatch', pymongo.DESCENDING)
