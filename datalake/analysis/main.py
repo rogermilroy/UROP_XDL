@@ -8,9 +8,11 @@ import zmq
 from utils.network_details import get_ip
 import ujson as json
 from analysis.weight_analysis import analyse_decision
+# import argparse
+import time
 
 
-def temporary_analysis(selection: str, analysis: str, n: int, test_run: str):
+def temporary_analysis(selection: str, analysis: str, n: int, training_run: str):
     """
     A quick script to get some analyses done
     :return:
@@ -50,12 +52,21 @@ def temporary_analysis(selection: str, analysis: str, n: int, test_run: str):
     # get results of analyse_decision
     res = analyse_decision(model, batch, selection, analysis, n,
                            "mongodb://localhost:27017/",
-                           test_run)
-    packet = {'data': res}
+                           training_run)
+    packet = {'training_run': training_run, 'weight_selection_type': selection,
+              'analysis_type': analysis, 'data': res}
 
     # Put in push socket.
     publish.send_string(json.dumps(res))
 
+    time.sleep(5.)
+
 
 if __name__ == '__main__':
+
     temporary_analysis("band", "pos_neg", 3, "test_network1")
+    temporary_analysis("band", "avg", 3, "test_network1")
+    temporary_analysis("relevant_neurons", 'pos_neg', 5, 'test_network1')
+    temporary_analysis("band", "total", 6, "test_network1")
+    temporary_analysis("top_weights", "avg", 5, "test_network1")
+    temporary_analysis("relevant_neurons", 'total', 5, 'test_network1')

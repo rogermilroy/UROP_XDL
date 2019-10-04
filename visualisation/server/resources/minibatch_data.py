@@ -7,7 +7,8 @@ class MinibatchData(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('training_run')
-        self.parser.add_argument('type')
+        self.parser.add_argument('analysis_type')
+        self.parser.add_argument('weight_selection_type')
         self.parser.add_argument('minibatch')
         # Use a local db. Makes the most sense for now. May change to be configurable in the future.
         # currently db used is training_data. This is due to code reuse. TODO change?
@@ -18,7 +19,9 @@ class MinibatchData(Resource):
         args = self.parser.parse_args(strict=True)
         # training_run gets us the collection. minibatch and type the specific record.
         data = self.db[args['training_run']].find_one({"minibatch": args['minibatch'],
-                                                       "type": args['type']})
+                                                       "weight_selection_type": args[
+                                                           'weight_selection_type'],
+                                                       "analysis_type": args['analysis_type']})
         if data is not None:
             return {'data': data}
         else:
