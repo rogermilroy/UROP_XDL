@@ -21,6 +21,7 @@ def temporary_analysis(selection: str, analysis: str, n: int, training_run: str)
     context = zmq.Context()
     publish = context.socket(zmq.PUSH)
     publish.bind('tcp://' + str(get_ip()) + ':' + '5556')
+    print(str(get_ip()) + ':' + '5556')
 
     model = TestFeedforwardNet()
     model.load_state_dict(torch.load('../test_weights/MNIST_params'))  # TODO fetch from db?
