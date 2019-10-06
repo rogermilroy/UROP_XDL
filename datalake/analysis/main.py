@@ -6,6 +6,7 @@ from torchvision.datasets import MNIST
 from testing.test_dataloaders import create_split_loaders
 import zmq
 from utils.network_details import get_ip
+from utils.data_processing import decode_model_state
 import ujson as json
 from analysis.weight_analysis import analyse_decision
 # import argparse
@@ -25,8 +26,8 @@ def temporary_analysis(selection: str, analysis: str, n: int, training_run: str)
     print(str(get_ip()) + ':' + '5556')
 
     db = pymongo.MongoClient("mongodb://localhost:27017/").training_data
-    model_state = db[training_run].find_one({'final_model_state': {'$exists': True}},
-                                            {'final_model_state'})
+    model_state = decode_model_state(db[training_run].find_one({'final_model_state': {'$exists': True}},
+            projection={'final_model_state': True, '_id': False})['final_model_state'])
 
     model = TestFeedforwardNet()
     model.load_state_dict(model_state)
@@ -61,9 +62,10 @@ def temporary_analysis(selection: str, analysis: str, n: int, training_run: str)
                            training_run)
     packet = {'training_run': training_run, 'weight_selection_type': selection,
               'analysis_type': analysis, 'data': res}
+    print(packet)
 
     # Put in push socket.
-    publish.send_string(json.dumps(res))
+    publish.send_string(json.dumps(packet))
 
     time.sleep(5.)
 

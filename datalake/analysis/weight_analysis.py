@@ -4,7 +4,7 @@ from torch import Tensor
 from analysis.relevance_propagation import layerwise_relevance
 from analysis.analysis_utils import *
 from analysis.path_selection import *
-from utils.data_processing import decode_model_state
+from utils.data_processing import decode_model_state, encode_tensor
 import pymongo
 
 # creating indices? Maybe in datalake code?
@@ -33,6 +33,10 @@ def step_diff(current: Tensor, past: Tensor, final: Tensor) -> Tensor:
     :param final: Tensor The final models selection of weights.
     :return: Tensor The difference between the selections.
     """
+    current = current.to(torch.float)
+    past = past.to(torch.float)
+    final = final.to(torch.float)
+    # TODO find a better place for this.
     return dist_to_final(current, final) - dist_to_final(past, final)
 
 
@@ -110,9 +114,9 @@ def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_co
     diffs = list()
     # iterate over all the minibatches.
     for i in range(items -1):
-        if i == 2:
+        #if i == 2:
             # only do a few for testing.
-            break
+            #break
         # get the weights from the model state!
         model1 = decode_model_state(cursor[i]['model_state'])
         model2 = decode_model_state(cursor[i+1]['model_state'])
@@ -123,8 +127,8 @@ def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_co
         print("Final weights.size: ",final_weights.size())
         # TODO maybe add the minibatch number in a tuple?
         # analyse the difference between this minibatch and the one before. i -> i+1
-        diffs.append(analysis_func[analysis](current=weights1, past=weights2, final=final_weights))
+        diffs.append(encode_tensor(analysis_func[analysis](current=weights1, past=weights2, final=final_weights)))
 
     print(diffs)
 
-    pass
+    return(diffs)
