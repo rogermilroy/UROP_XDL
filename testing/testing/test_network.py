@@ -1,8 +1,17 @@
+from collections import OrderedDict
+
 import torch
-from torch.nn.functional import *
 import torch.nn as nn
 import torch.nn.init as torch_init
-from collections import OrderedDict
+
+
+class Flatten(nn.Module):
+    def __init__(self, num_flat_features):
+        super().__init__()
+        self.num_flat_features = num_flat_features
+
+    def forward(self, batch):
+        return batch.reshape(-1, self.num_flat_features)
 
 
 class TestFeedforwardNet(nn.Module):
@@ -60,47 +69,50 @@ class TestDeepCNN(nn.Module):
         self.activations = dict()
 
         # conv1: 1 input channel, 12 output channels, [8x8] kernel size
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=12, kernel_size=8)
-
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=12, kernel_size=5)
         # Add batch-normalization to the outputs of conv1
         self.conv1_normed = nn.BatchNorm2d(12)
-
         # Initialized weights using the Xavier-Normal method
         torch_init.xavier_normal_(self.conv1.weight)
+        self.relu1 = nn.ReLU()
 
         # conv2: 12 input channels, 12 output channels, [8x8] kernel
-        self.conv2 = nn.Conv2d(in_channels=12, out_channels=12, kernel_size=8)
+        self.conv2 = nn.Conv2d(in_channels=12, out_channels=12, kernel_size=5)
         self.conv2_normed = nn.BatchNorm2d(12)
         torch_init.xavier_normal_(self.conv2.weight)
+        self.relu2 = nn.ReLU()
 
         # conv3: 12 input channels, 10 output channels, [6x6] kernel
-        self.conv3 = nn.Conv2d(in_channels=12, out_channels=10, kernel_size=6)
+        self.conv3 = nn.Conv2d(in_channels=12, out_channels=10, kernel_size=5)
         self.conv3_normed = nn.BatchNorm2d(10)
         torch_init.xavier_normal_(self.conv3.weight)
+        self.relu3 = nn.ReLU()
 
         # Apply max-pooling with a [2x2] kernel using tiling
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         # conv4: 10 input channels, 10 output channels, [4x4] kernel
-        self.conv4 = nn.Conv2d(in_channels=10, out_channels=10, kernel_size=4)
+        self.conv4 = nn.Conv2d(in_channels=10, out_channels=10, kernel_size=3)
         self.conv4_normed = nn.BatchNorm2d(10)
         torch_init.xavier_normal_(self.conv4.weight)
+        self.relu4 = nn.ReLU()
 
-        # conv5: 10 input channels, 8 output channels, [4x4] kernel
-        self.conv5 = nn.Conv2d(in_channels=10, out_channels=8, kernel_size=4)
-        self.conv5_normed = nn.BatchNorm2d(8)
-        torch_init.xavier_normal_(self.conv5.weight)
+        # # conv5: 10 input channels, 8 output channels, [4x4] kernel
+        # self.conv5 = nn.Conv2d(in_channels=10, out_channels=8, kernel_size=4)
+        # self.conv5_normed = nn.BatchNorm2d(8)
+        # torch_init.xavier_normal_(self.conv5.weight)
+        #
+        # self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.flatten = Flatten(num_flat_features=360)  # TODO figure out how to do dynamically
 
-        # Define 2 fully connected layers:
-        # TODO: Use the value you computed in Part 1, Question 4 for fc1's in_features
-        self.fc1 = nn.Linear(in_features=115200, out_features=128)
-        self.fc1_normed = nn.BatchNorm1d(128)
+        # # Define 2 fully connected layers:
+        self.fc1 = nn.Linear(in_features=360, out_features=128)
+        # self.fc1_normed = nn.BatchNorm1d(128)
         torch_init.xavier_normal_(self.fc1.weight)
+        self.relu5 = nn.ReLU()
 
-        # TODO: Output layer: what should out_features be?
-        self.fc2 = nn.Linear(in_features=128, out_features=14)
+        self.fc2 = nn.Linear(in_features=128, out_features=10)
         torch_init.xavier_normal_(self.fc2.weight)
 
     def forward(self, batch):
@@ -122,27 +134,27 @@ class TestDeepCNN(nn.Module):
         # Apply first convolution, followed by ReLU non-linearity;
         # use batch-normalization on its outputs
         # with torch.no_grad():
-        batch = relu(self.conv1_normed(self.conv1(batch)))
+        batch = self.relu1(self.conv1_normed(self.conv1(batch)))
 
         # Apply conv2 and conv3 similarly
-        batch = relu(self.conv2_normed(self.conv2(batch)))
+        batch = self.relu2(self.conv2_normed(self.conv2(batch)))
 
-        batch = relu(self.conv3_normed(self.conv3(batch)))
+        batch = self.relu3(self.conv3_normed(self.conv3(batch)))
 
         # Pass the output of conv3 to the pooling layer
         batch = self.pool(batch)
 
-        batch = relu(self.conv4_normed(self.conv4(batch)))
+        batch = self.relu4(self.conv4_normed(self.conv4(batch)))
+        #
+        # batch = relu(self.conv5_normed(self.conv5(batch)))
 
-        batch = relu(self.conv5_normed(self.conv5(batch)))
-
-        batch = self.pool2(batch)
+        # batch = self.pool2(batch)
 
         # Reshape the output of the conv3 to pass to fully-connected layer
-        batch = batch.view(-1, self.num_flat_features(batch))
+        batch = self.flatten(batch)
 
         # Connect the reshaped features of the pooled conv3 to fc1
-        batch = relu(self.fc1(batch))
+        batch = self.relu5(self.fc1(batch))
 
         # Connect fc1 to fc2 - this layer is slightly different than the rest (why?)
         batch = self.fc2(batch)
