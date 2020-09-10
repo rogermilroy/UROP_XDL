@@ -21,7 +21,7 @@ def largest_n(tensor: Tensor, n: int, pos: bool, in_order: bool = False, desc: b
         t = recurse_large_neg(tensor, list(), indices, n, 0)
     if in_order:
         t.sort(reverse=desc)
-    return [it[1] for it in t]
+    return [it for _, it in t]
 
 
 def band_selection(relevances: list, weights: list, n: int) -> list:

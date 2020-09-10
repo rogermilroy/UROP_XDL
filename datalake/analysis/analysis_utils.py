@@ -1,11 +1,13 @@
 # Utils for analysis module.
-import torch
+import re
 from copy import deepcopy
 from heapq import heappush, heapreplace
+from typing import Callable
 
+import torch
 from heapq_max import heappush_max, heapreplace_max
 from torch import Tensor
-import re
+from torch.nn.modules import Module
 
 
 def recurse_large_pos(tensor: Tensor, top: list, indices: list, n: int, dim: int) -> list:
@@ -120,7 +122,8 @@ def path_to_weights(path: list) -> list:
     """
     weights = list()
     for i in range(len(path) - 1):
-        weights.append([path[i][0], path[i+1][0]])
+        weights.append((path[i][1], path[i + 1][1]))  # TODO this only works for linear check on
+        # conv!!
     return weights
 
 
@@ -138,10 +141,10 @@ def paths_to_layers(paths: list) -> list:
     depth = len(paths[0])
     layers = list()
     for j in range(depth):
-        layers.append(list())
+        layers.append(set())
     for path in paths:
         for i in range(depth):
-            layers[i].append(path[i])
+            layers[i].add(path[i])
     return layers
 
 
@@ -184,17 +187,16 @@ def extract_weights(weights_list: list, indices_list: list) -> Tensor:
     Input format:  weights: [tensor(output layer) ... tensor(input layer)]
                    indices: [[[index 0 output layer].. [index n output layer]] .. [index 0
                    input layer].. [index n input layer]]]
-    :param weights:
-    :param indices:
+    :param weights_list:
+    :param indices_list:
     :return: Tensor. The selected weights in a flat tensor.
     """
     w = list()
-    layers = len(weights_list)
-    for i in range(layers):
+    for i in range(len(weights_list)):
         layer = weights_list[i]
         layer_indices = indices_list[i]
         w.append(find_indices(tensor=layer, indices=layer_indices))
-    return torch.tensor(w).flatten()
+    return torch.cat([torch.stack(we) for we in w])
 
 
 def weights_from_model_state(model_state: dict) -> list:
@@ -217,10 +219,19 @@ def weights_from_model_state(model_state: dict) -> list:
                 raise Exception("Some issue with parameter numbering.")
             else:
                 weights.insert(int(nums[0]) - 1, tensor)
-    
+
     weights = [x for x in reversed(weights) if x is not None]
     # print(weights)
     return weights
+
+
+def apply_rho(layer, rho: Callable[[Module], Module]):
+    new_layer = deepcopy(layer)
+    try:
+        new_layer.weight.data = rho(layer.weight.data)
+    except:
+        pass
+    return new_layer
 
 
 if __name__ == '__main__':
