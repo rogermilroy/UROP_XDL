@@ -1,29 +1,34 @@
-from utils.network_details import get_ip
-from utils.data_processing import *
-from torch import Tensor
 import torch
-import zmq
 import ujson as json
+import zmq
+from torch import Tensor
+from utils.data_processing import *
+from utils.network_details import get_ip
 
 
 class NNDataExtractor:
     """
     Extracts and sends NN data to Datalake.
     """
-    def __init__(self):
+    def __init__(self, model_name: str, training_run_number: int, local=False):
         """
         Creates the zmq context, socket and binds to the relevant port.
         """
         self.context = zmq.Context()
         self.sock = self.context.socket(zmq.PUSH)
-        self.ip = get_ip()
+        if not local:
+            self.ip = get_ip()
+        else:
+            self.ip = '127.0.0.1'
         self.port = 5555
         # currently only allowing tcp connection. May add more for flexibility later.
         self.sock.bind('tcp://' + str(self.ip) + ":" + str(self.port))
         print(str(self.ip) + ":" + str(self.port))
         self.total_minibatch_number = 0
+        self.model_name = model_name
+        self.training_run_number = training_run_number
 
-    def extract_data(self, model_name: str, training_run_number: int, epoch: int,
+    def extract_data(self,  epoch: int,
                      epoch_minibatch: int, inputs: Tensor, model_state: dict, outputs: Tensor, targets: Tensor) -> None:
         """
         Encodes and sends data. Auto increments total minibatch number.
@@ -36,8 +41,8 @@ class NNDataExtractor:
         :return: None
         """
         data = dict()
-        data['model_name'] = model_name
-        data['training_run_number'] = training_run_number
+        data['model_name'] = self.model_name
+        data['training_run_number'] = self.training_run_number
         data['epoch'] = epoch
         data['epoch_minibatch'] = epoch_minibatch
         data['total_minibatch'] = self.total_minibatch_number
@@ -50,7 +55,7 @@ class NNDataExtractor:
         self.send_json(json.dumps(data))
         self.total_minibatch_number += 1
 
-    def extract_metadata(self, model_name: str, training_run_number: int, epochs: int,
+    def extract_metadata(self, epochs: int,
                          batch_size: int, cuda: bool, model: torch.nn.Module,
                          criterion, optimizer: torch.optim.Optimizer,
                          metadata: dict) -> None:
@@ -68,8 +73,8 @@ class NNDataExtractor:
         :return: None
         """
         mdata = dict()
-        mdata['model_name'] = model_name
-        mdata['training_run_number'] = training_run_number
+        mdata['model_name'] = self.model_name
+        mdata['training_run_number'] = self.training_run_number
         mdata['epochs'] = epochs
         mdata['batch_size'] = batch_size
         mdata['cuda'] = cuda
@@ -80,13 +85,14 @@ class NNDataExtractor:
 
         self.send_json(json.dumps(mdata))
 
-    def extract_final_state(self, model_name, training_run_number, final_epochs, final_model_state, best_params_epoch):
+    def extract_final_state(self, final_epochs, final_model_state, best_params_epoch):
         mdata = dict()
-        mdata['model_name'] = model_name
-        mdata['training_run_number'] = training_run_number
+        mdata['model_name'] = self.model_name
+        mdata['training_run_number'] = self.training_run_number
         mdata['final_epochs'] = final_epochs
         mdata['final_model_state'] = encode_model_state(final_model_state)
         mdata['best_params_epoch'] = best_params_epoch
+        print("sending final state...")
     
         self.send_json(json.dumps(mdata))
 
@@ -104,5 +110,5 @@ class NNDataExtractor:
 
 
 if __name__ == '__main__':
-    test_extractor = NNDataExtractor()
+    test_extractor = NNDataExtractor("test", 0)
     test_extractor.send_json(b'Testing.')
