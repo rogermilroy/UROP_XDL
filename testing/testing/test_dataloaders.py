@@ -1,18 +1,16 @@
 import os
+
 import numpy as np
-from torch.utils.data import *
-from torchvision.transforms import *
-
-import torch
-from torch.utils.data.sampler import SubsetRandomSampler
-
-from PIL import Image
-
 import pandas as pd
+import torch
+from PIL import Image
+from torch.utils.data import *
+from torch.utils.data.sampler import SubsetRandomSampler
+from torchvision.transforms import *
 
 
 def create_split_loaders(dataset, batch_size, seed,
-                         p_val=0.1, p_test=0.2, shuffle=True, extras={}):
+                         p_val=0.1, p_test=0.2, shuffle=True, extras={}, subset_size=0):
     """ Creates the DataLoader objects for the training, validation, and test sets.
 
     Params:
@@ -48,13 +46,18 @@ def create_split_loaders(dataset, batch_size, seed,
         np.random.seed(seed)
         np.random.shuffle(all_indices)
 
-    # Create the validation split from the full dataset
-    val_split = int(np.floor(p_val * dataset_size))
-    train_ind, val_ind = all_indices[val_split:], all_indices[: val_split]
+    # if we want just a subset we do it after shuffling to ensure reasonable distribution.
+    if subset_size > 0:
+        dataset_size = subset_size
+        all_indices = all_indices[:dataset_size]
+
+    # Create the test split from the full dataset
+    test_split = int(np.floor(p_test * dataset_size))
+    train_ind, test_ind = all_indices[test_split:], all_indices[: test_split]
 
     # Separate a test split from the training dataset
-    test_split = int(np.floor(p_test * len(train_ind)))
-    train_ind, test_ind = train_ind[test_split:], train_ind[: test_split]
+    val_split = int(np.floor(p_val * len(train_ind)))
+    train_ind, val_ind = train_ind[val_split:], train_ind[: val_split]
 
     # Use the SubsetRandomSampler as the iterator for each subset
     sample_train = SubsetRandomSampler(train_ind)
@@ -146,13 +149,13 @@ class ChestXrayDataset(Dataset):
         # Load the image
         image = Image.open(image_path).convert(mode=str(self.color))
 
+        # Verify that image is in Tensor format
+        if type(image) is not torch.Tensor:
+            image = ToTensor(image)
+
         # If a transform is specified, apply it
         if self.transform is not None:
             image = self.transform(image)
-
-        # Verify that image is in Tensor format
-        if type(image) is not torch.Tensor:
-            image = self.transform.ToTensor(image)
 
         # Convert multi-class label into binary encoding
         label = self.convert_label(self.labels[ind], self.classes)
