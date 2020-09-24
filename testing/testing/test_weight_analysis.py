@@ -1,6 +1,5 @@
 import unittest
 
-import torch
 from analysis.weight_analysis import *
 from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet
@@ -21,7 +20,7 @@ class TestWeightAnalysis(unittest.TestCase):
         self.model = TestFeedforwardNet()
         self.model.load_state_dict(torch.load('../test_weights/MNIST_params'))
         transform = ToTensor()
-        dataset = MNIST('.', download=True, transform=transform)
+        self.dataset = MNIST('../../MNIST/original', download=False, transform=transform)
 
         batch_size = 1
 
@@ -30,7 +29,7 @@ class TestWeightAnalysis(unittest.TestCase):
         p_test = 0.0
         extras = dict()
 
-        train_loader, val_loader, test_loader = create_split_loaders(dataset=dataset,
+        train_loader, val_loader, test_loader = create_split_loaders(dataset=self.dataset,
                                                                      batch_size=batch_size,
                                                                      seed=seed,
                                                                      p_val=p_val, p_test=p_test,
@@ -72,4 +71,4 @@ class TestWeightAnalysis(unittest.TestCase):
         self.assertTrue(torch.allclose(ref, pos_neg_diff(self.t, self.t_1, self.final)))
 
     def test_analyse_decision(self):
-        analyse_decision(self.model, self.batch, "band", "pos_neg", 3, "mongodb://localhost:27017/", "test_network1")
+        pass
