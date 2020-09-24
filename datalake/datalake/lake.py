@@ -1,10 +1,10 @@
-import zmq
-from zmq import ZMQError
-from multiprocessing import Process
 import argparse
+import time
+from multiprocessing import Process
+
 import pymongo
 import ujson as json
-import time
+import zmq
 
 
 def lake_worker(address: str, coordinator: str, db_conn_string: str, capacity: int,
@@ -46,6 +46,7 @@ class LakeWorker:
         self.buffer = dict()
         self.capacity = capacity
         self.max_wait = max_wait
+        self.collections = list()
         # # NOTE this dict is never cleared so will cause crashes once it gets too big.
         # self.index_state = dict()
         # self.all_indexed = True
@@ -74,6 +75,7 @@ class LakeWorker:
                 # create if not.
                 if col not in self.buffer:
                     self.buffer[col] = [data]
+                    self.collections.append(col)
                 else:
                     self.buffer[col].append(data)
                 # We have a limit to how much is stored in the buffer and once it is reached we send
@@ -102,6 +104,7 @@ class LakeWorker:
                 elif signal == "KILL":
                     print("Killing process")
                     self.flush_buffer()
+                    self.add_indices()
                     # exit the process.
                     exit(code=1)
 
@@ -112,8 +115,19 @@ class LakeWorker:
         """
         for col, data in self.buffer.items():
             result = self.db[col].insert_many(data)
-            # print("Inserted to database")
+            print("Inserted to database")
         self.buffer = dict()
+
+    def add_indices(self) -> None:
+        """
+        Adds an index on the "total_minibatch" field to support analysis.
+        Done before killing to minimise performance overhead. Does add time to killing.
+        :return: None
+        """
+        print("Adding indices, please wait...")
+        for col in self.collections:
+            self.db[col].create_index([("total_minibatch", pymongo.DESCENDING)], background=True)
+        print("Indices added")
 
     def pause_work(self) -> None:
         # listen for a signal from the coordinator (blocking intentionally)
@@ -122,6 +136,7 @@ class LakeWorker:
             print("Restarting")
             self.work()
         elif signal == "KILL":
+            self.add_indices()
             # exit immediately as we have already flushed the buffer.
             exit(code=1)
 
@@ -168,7 +183,7 @@ class LakeCoordinator:
         self.worker_control.send_string("KILL")
         start_time = time.time()
         # allow some time to exit and check.
-        while time.time() - start_time < timeout :
+        while time.time() - start_time < timeout:
             for p in self.processes:
                 if p.exitcode is not None:
                     self.processes.remove(p)
@@ -229,7 +244,7 @@ def main():
     parser = argparse.ArgumentParser(description="Create a datalake with some processes, "
                                                  "reading from an address.")
     parser.add_argument('address', type=str, help='The address of the server distributing the '
-                                                  'data.')
+                                                  'data as a string.')
     parser.add_argument('processes', type=int, help='Number of processes wanted.')
     parser.add_argument('capacity', type=int, help="The maximum amount of data dicts to be "
                                                    "buffered before saving to MongoDB. Attention! "
@@ -251,6 +266,10 @@ def main():
         if line == 'kill':
             lake.end_lake()
             exit(code=1)
+        if line == 'pause':
+            lake.pause_lake()
+        if line == 'restart':
+            lake.restart_lake()
 
 
 if __name__ == '__main__':
