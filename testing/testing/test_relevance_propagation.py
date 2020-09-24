@@ -1,7 +1,6 @@
 import unittest
 
 import matplotlib.pyplot as plt
-import torch
 from analysis.relevance_propagation import *
 from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet
@@ -60,9 +59,9 @@ class TestRelevancePropagation(unittest.TestCase):
                                 [1., -1., -2., 1.],
                                 [0., -2., 1., 0]]).t()
         relevances = torch.tensor([[0., 0.8, 0.]])
-        self.assertTrue(-0.001 < float(torch.sum(linear_relevance(activations, weights,
-                                                                  relevances, 1.0, 0.0) -
-                         torch.tensor([[0.3733, 0.0000, 0.0000, 0.4267]]))) < 0.001)
+        self.assertTrue(-0.001 < float(torch.sum(linear_alpha_beta_relevance(activations, weights,
+                                                                             relevances, 1.0, 0.0) -
+                                                 torch.tensor([[0.3733, 0.0000, 0.0000, 0.4267]]))) < 0.001)
 
     def test_batch_linear_relevance(self):
         activations = torch.tensor([[0.7, 0.1, 0.3, 0.8],
@@ -71,6 +70,6 @@ class TestRelevancePropagation(unittest.TestCase):
                                 [1., -1., -2., 1.],
                                 [0., -2., 1., 0]]).t()
         relevances = torch.tensor([[0., 0.8, 0.]])
-        self.assertTrue(-0.001 < float(torch.sum(linear_relevance(activations, weights,
-                                                                  relevances, 1.0, 0.0)[1] -
-                         torch.tensor([[0.3200, 0.0000, 0.0000, 0.4800]]))) < 0.001)
+        self.assertTrue(-0.001 < float(torch.sum(linear_alpha_beta_relevance(activations, weights,
+                                                                             relevances, 1.0, 0.0)[1] -
+                                                 torch.tensor([[0.3200, 0.0000, 0.0000, 0.4800]]))) < 0.001)
