@@ -7,7 +7,7 @@ setup(
     install_requires=[
         'pyzmq>=18.0.2',
         'pymongo>=3.8.0',
-        'ujson>=1.35',
+        'ujson>=3.2.0',
         'tqdm>=4.31.1',
         'datalake>=0.0.0',
         'Flask>=1.0.2',

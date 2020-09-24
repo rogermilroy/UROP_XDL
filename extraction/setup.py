@@ -10,6 +10,6 @@ setup(
         'torchvision>=0.2.1',
         'pyzmq>=18.0.2',
         'tqdm>=4.31.1',
-        'ujson>=1.35'
+        'ujson>=3.2.0'
     ],
 )
