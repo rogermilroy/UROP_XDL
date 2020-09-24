@@ -1,14 +1,13 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='utils',
-    packages=['utils'],
+    packages=find_packages(),
     include_package_data=True,
     install_requires=[
         'numpy>=1.14.5',
-        'torch>=1.1.0',
+        'torch>=1.5.0',
         'torchvision>=0.2.1',
-        'pyzmq>=18.0.2',
-        'ujson>=1.35'
+        'pyzmq>=18.0.2'
     ],
 )

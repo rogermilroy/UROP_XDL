@@ -29,6 +29,7 @@ git checkout visualise
 # install the python packages.
 pip3 install --user -e ./datalake
 pip3 install --user -e ./utils
+pip3 install --user -e ./visualsation
 
 # install mongodb
 sudo apt-get install -y mongodb-org

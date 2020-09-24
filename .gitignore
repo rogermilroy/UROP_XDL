@@ -110,6 +110,8 @@ testing/processed
 testing/raw
 /processed
 /raw
+testing/MNIST
+testing/testing/MNIST
 
 # pycharm files
 .idea
@@ -119,3 +121,9 @@ testing/raw
 
 # pip install files
 *.egg-info
+
+# MacOS files
+.DS_Store
+
+# Data files
+ChestXrayImgs

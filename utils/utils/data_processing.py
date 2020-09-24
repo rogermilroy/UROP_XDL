@@ -1,8 +1,8 @@
-from torch import Tensor
-import torch
+from typing import List, Tuple, Dict
+
 import numpy as np
-import ujson as json
-# import zmq.utils.jsonapi as json
+import torch
+from torch import Tensor
 
 
 def encode_model_state(model_state: dict) -> dict:
@@ -25,7 +25,7 @@ def decode_model_state(model_state: dict) -> dict:
     :return: dict containing weight and bias Tensors.
     """
     state = dict()
-    for key, value in model_state:
+    for key, value in model_state.items():
         rkey = key.replace('_dot_', '.')
         state[rkey] = decode_tensor(value)
     return state
@@ -65,7 +65,7 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     """
     if not isinstance(tensor_dict, dict):
         raise TypeError("Must be a dict.")
-    tens = torch.tensor(np.array(tensor_dict["data"])).to(tensor_dict["dtype"])
+    tens = torch.tensor(np.array(tensor_dict["data"]))#.to(tensor_dict["dtype"]) TODO fix this.
     if tensor_dict["device"] == str(torch.device("cuda")) and torch.cuda.is_available():
         tens = tens.to(tensor_dict["device"])
     # TODO reconstruct sparse tensor from dense.
@@ -73,62 +73,93 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     return tens
 
 
-def data_to_json(model_name: str, training_run_number: int, epoch: int, epoch_minibatch: int,
-                 total_minibatch: int, inputs: Tensor,
-                 model_state: dict, outputs: Tensor, targets: Tensor) -> bytes:
+def encode_relevance(relevance: List[Tensor]) -> List[dict]:
     """
-    Takes raw data from the training loop and converts to JSON to send to datalake.
-    :param model_name: str The name of the model
-    :param training_run_number: int The number of the training run.
-    :param epoch: int Number of times through dataset.
-    :param epoch_minibatch: int The minibatch number within current epoch
-    :param total_minibatch: int The total number of minibatches.
-    :param inputs: Tensor The inputs as a Tensor  # TODO link to original dataset.
-    :param model_state: dict The parameters of the model as a dict of Tensors.
-    :param outputs: Tensor The outputs of the model as a Tensor
-    :param targets: Tensor The target values of the model as a Tensor.
-    :return: bytes JSON encoded dict. 
+    Encodes relevance list (layers for one relevance)
+    :param relevance:
+    :return:
     """
-    data = dict()  # TODO add training run data.
-    data['model_name'] = model_name
-    data['training_run_number'] = training_run_number
-    data['epoch'] = epoch
-    data['epoch_minibatch'] = epoch_minibatch
-    data['total_minibatch'] = total_minibatch
-    data['inputs'] = encode_tensor(inputs)
-    data['outputs'] = encode_tensor(outputs)
-    data['targets'] = encode_tensor(targets)
-
-    data['model_state'] = encode_model_state(model_state)
-
-    return json.dumps(data)
+    encoded_relevance = list()
+    for layer in relevance:
+        encoded_relevance.append(encode_tensor(layer))
+    return encoded_relevance
 
 
-def metadata_to_json(model_name: str, training_run_number: int, epochs: int, batch_size: int,
-                     cuda: bool, model: torch.nn.Module, criterion,
-                     optimizer: torch.optim.Optimizer, metadata: dict) -> bytes:
+def decode_relevance(encoded_relevance: List[dict]) -> List[Tensor]:
     """
-    Converts metadata to json.
-    :param model_name: str The name of the model
-    :param training_run_number: int The number of the training run.
-    :param epochs: int The number of epochs to be run. (Full runs through the dataset)
-    :param batch_size: int The number of samples per minibatch.
-    :param cuda: bool Whether the training is on a CUDA GPU
-    :param model: torch.Module The model being trained.
-    :param criterion: torch.nn.Criterion The loss criterion.
-    :param optimizer: torch.optim.Optimizer The optimisation algorithm used.
-    :param metadata: dict Any other metadata to be stored.
-    :return: bytes JSON encoded dict.
+    Decodes relevance list (layers for one relevance)
+    :param encoded_relevance:
+    :return:
     """
-    mdata = dict()
-    mdata['model_name'] = model_name
-    mdata['training_run_number'] = training_run_number
-    mdata['epochs'] = epochs
-    mdata['batch_size'] = batch_size
-    mdata['cuda'] = cuda
-    mdata['model'] = str(model)
-    mdata['criterion'] = str(criterion)
-    mdata['optimizer'] = str(optimizer)
-    mdata['metadata'] = metadata
+    decoded_relevance = list()
+    for layer in encoded_relevance:
+        decoded_relevance.append(decode_tensor(layer))
+    return decoded_relevance
 
-    return json.dumps(mdata)
+
+def encode_relevances(relevances: List[List[Tensor]]) -> List[List[dict]]:
+    """
+    Encodes multiple relevances as list of lists of dicts that can be stored in Mongo
+    :param relevances:
+    :return:
+    """
+    encoded_relevances = list()
+    for relevance in relevances:
+        encoded_relevances.append(encode_relevance(relevance))
+    return encoded_relevances
+
+
+def decode_relevances(encoded_relevances: List[List[dict]]) -> List[List[Tensor]]:
+    """
+    Decodes an encoded relevances list. (Multiple relevances)
+    :param encoded_relevances:
+    :return:
+    """
+    decoded_relevances = list()
+    for encoded_relevance in encoded_relevances:
+        decoded_relevances.append(decode_relevance(encoded_relevance))
+    return decoded_relevances
+
+
+def encode_diffs(diffs: Dict[int, Tuple[List[Tensor], List[Tensor], Tensor, Tensor, Tensor,
+                                        Tensor, Tensor]]) -> \
+        Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict, dict]]:
+    """
+    Encodes diff list for storage in Mongo.
+    :param diffs:
+    :return:
+    """
+    encoded_diffs = dict()
+    for key, (rel0, rel1, top3_before, top3_after, outs_before, outs_after, targets) in diffs.items():
+        encoded_diffs[str(key)] = (
+            encode_relevance(rel0),
+            encode_relevance(rel1),
+            encode_tensor(top3_before),
+            encode_tensor(top3_after),
+            encode_tensor(outs_before),
+            encode_tensor(outs_after),
+            encode_tensor(targets)
+        )
+    return encoded_diffs
+
+
+def decode_diffs(diffs: Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict, dict]]) -> \
+        Dict[int, Tuple[List[Tensor], List[Tensor], Tensor, Tensor, Tensor, Tensor, Tensor]]:
+    """
+    Encodes diff list for storage in Mongo.
+    :param diffs:
+    :return:
+    """
+    decoded_diffs = dict()
+    for key, (
+    rel0, rel1, top3_before, top3_after, outs_before, outs_after, targets) in diffs.items():
+        decoded_diffs[int(key)] = (
+            decode_relevance(rel0),
+            decode_relevance(rel1),
+            decode_tensor(top3_before),
+            decode_tensor(top3_after),
+            decode_tensor(outs_before),
+            decode_tensor(outs_after),
+            decode_tensor(targets)
+        )
+    return decoded_diffs
