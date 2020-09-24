@@ -1,6 +1,8 @@
-from torch import Tensor
-import torch
+from typing import List, Tuple, Dict
+
 import numpy as np
+import torch
+from torch import Tensor
 
 
 def encode_model_state(model_state: dict) -> dict:
@@ -69,3 +71,95 @@ def decode_tensor(tensor_dict: dict) -> Tensor:
     # TODO reconstruct sparse tensor from dense.
     # TODO reattach gradient (Might not be possible)
     return tens
+
+
+def encode_relevance(relevance: List[Tensor]) -> List[dict]:
+    """
+    Encodes relevance list (layers for one relevance)
+    :param relevance:
+    :return:
+    """
+    encoded_relevance = list()
+    for layer in relevance:
+        encoded_relevance.append(encode_tensor(layer))
+    return encoded_relevance
+
+
+def decode_relevance(encoded_relevance: List[dict]) -> List[Tensor]:
+    """
+    Decodes relevance list (layers for one relevance)
+    :param encoded_relevance:
+    :return:
+    """
+    decoded_relevance = list()
+    for layer in encoded_relevance:
+        decoded_relevance.append(decode_tensor(layer))
+    return decoded_relevance
+
+
+def encode_relevances(relevances: List[List[Tensor]]) -> List[List[dict]]:
+    """
+    Encodes multiple relevances as list of lists of dicts that can be stored in Mongo
+    :param relevances:
+    :return:
+    """
+    encoded_relevances = list()
+    for relevance in relevances:
+        encoded_relevances.append(encode_relevance(relevance))
+    return encoded_relevances
+
+
+def decode_relevances(encoded_relevances: List[List[dict]]) -> List[List[Tensor]]:
+    """
+    Decodes an encoded relevances list. (Multiple relevances)
+    :param encoded_relevances:
+    :return:
+    """
+    decoded_relevances = list()
+    for encoded_relevance in encoded_relevances:
+        decoded_relevances.append(decode_relevance(encoded_relevance))
+    return decoded_relevances
+
+
+def encode_diffs(diffs: Dict[int, Tuple[List[Tensor], List[Tensor], Tensor, Tensor, Tensor,
+                                        Tensor, Tensor]]) -> \
+        Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict, dict]]:
+    """
+    Encodes diff list for storage in Mongo.
+    :param diffs:
+    :return:
+    """
+    encoded_diffs = dict()
+    for key, (rel0, rel1, top3_before, top3_after, outs_before, outs_after, targets) in diffs.items():
+        encoded_diffs[str(key)] = (
+            encode_relevance(rel0),
+            encode_relevance(rel1),
+            encode_tensor(top3_before),
+            encode_tensor(top3_after),
+            encode_tensor(outs_before),
+            encode_tensor(outs_after),
+            encode_tensor(targets)
+        )
+    return encoded_diffs
+
+
+def decode_diffs(diffs: Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict, dict]]) -> \
+        Dict[int, Tuple[List[Tensor], List[Tensor], Tensor, Tensor, Tensor, Tensor, Tensor]]:
+    """
+    Encodes diff list for storage in Mongo.
+    :param diffs:
+    :return:
+    """
+    decoded_diffs = dict()
+    for key, (
+    rel0, rel1, top3_before, top3_after, outs_before, outs_after, targets) in diffs.items():
+        decoded_diffs[int(key)] = (
+            decode_relevance(rel0),
+            decode_relevance(rel1),
+            decode_tensor(top3_before),
+            decode_tensor(top3_after),
+            decode_tensor(outs_before),
+            decode_tensor(outs_after),
+            decode_tensor(targets)
+        )
+    return decoded_diffs
