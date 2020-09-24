@@ -3,8 +3,10 @@ import random
 
 import torch
 
-orig = torch.load('../../MNIST/original/processed/training.pt')
-orig_test = torch.load('../../MNIST/original/processed/test.pt')
+root_dir = "../../testing/testing/MNIST/"
+
+orig = torch.load(root_dir + 'original/processed/training.pt')
+orig_test = torch.load(root_dir + 'original/processed/test.pt')
 
 
 def create_imbalanced(dataset, proportions: dict, save_path: str, trng_or_test: str):
@@ -16,11 +18,11 @@ def create_imbalanced(dataset, proportions: dict, save_path: str, trng_or_test: 
             new_labs.append(dataset[1][i])
             proportions[int(dataset[1][i])] -= 1
 
-    if not os.path.exists("../../MNIST/" + save_path):
+    if not os.path.exists(root_dir + save_path):
         print("making dirs")
-        os.makedirs("../../MNIST/" + save_path)
+        os.makedirs(root_dir + save_path)
 
-    torch.save((torch.stack(new_ims), torch.stack(new_labs)), "../../MNIST/" + save_path +
+    torch.save((torch.stack(new_ims), torch.stack(new_labs)), root_dir + save_path +
                trng_or_test)
 
 
@@ -34,7 +36,7 @@ def create_corrupted(dataset, p: float, save_path: str, trng_or_test: str):
         else:
             new_labs.append(dataset[1][i])
     print("{} labels changed out of {}".format(count, len(dataset[0])))
-    torch.save((dataset[0], torch.stack(new_labs)), "../../MNIST/" + save_path + trng_or_test)
+    torch.save((dataset[0], torch.stack(new_labs)), root_dir + save_path + trng_or_test)
 
 
 if __name__ == '__main__':
@@ -51,6 +53,6 @@ if __name__ == '__main__':
     create_imbalanced(orig, proportions=props, save_path="corrupted/processed/",
                       trng_or_test="training.pt")
 
-    d = torch.load('../../MNIST/corrupted/processed/training.pt')
+    d = torch.load(root_dir + 'corrupted/processed/training.pt')
     create_corrupted(dataset=d, p=0.1, save_path="corrupted/processed/",
                      trng_or_test="training.pt")
