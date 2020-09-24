@@ -201,16 +201,10 @@ def new_layerwise_relevance(model, inputs, index):
     :param index: The rank of the result desired (eg largest probability predicted or 2nd etc)
     :return: The relevances for each layer of the model.
     """
-    layers = list()
     weights = list()
     for param, tensor in reversed(model.state_dict().items()):
         if param.find("weight") != -1:
-            layers.append(torch.tensor([0.]))
-            layers.append(tensor)
             weights.append(tensor)
-    # for num, (layer, activation) in enumerate(reversed(model.activations.items())):
-    #     layers[(num * 2)] = activation
-    layers.append(inputs)
 
     model_layers = list(model._modules.values())
     L = len(model_layers)
@@ -222,7 +216,7 @@ def new_layerwise_relevance(model, inputs, index):
         activs[l + 1] = model_layers[l].forward(activs[l])
 
     # create the mask to select the relevance desired
-    probs = func.softmax(activs[-1])
+    probs = torch.softmax(torch.sigmoid(activs[-1]), dim=1)
     # print(probs)
     mask = torch.zeros_like(probs)
     top_k = torch.topk(probs, k=probs.shape[1]).indices
@@ -241,6 +235,5 @@ def new_layerwise_relevance(model, inputs, index):
     activs[0] = (activs[0].data).requires_grad_(True)
     rel = input_relevance(activations=activs[0], weights=model_layers[0], relevances=rel,
                           inputs=inputs)
-    relevances.append(rel)
 
-    return relevances, weights, activs[-1]
+    return rel, weights
