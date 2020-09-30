@@ -59,11 +59,11 @@ class LakeWorker:
         counter = 0
         last_received = time.time()
         while True:
-            # read the data (non-blocking)
-            socks = dict(self.poller.poll())
+            # read the data (1 second timeout)
+            socks = dict(self.poller.poll(1000))\
 
             # check if there is a message for receiver.
-            if socks.get(self.receiver) == zmq.POLLIN:
+            if self.receiver in socks and socks.get(self.receiver) == zmq.POLLIN:
                 msg = self.receiver.recv_string()
                 # print("received")
                 # keep track of the time
@@ -85,16 +85,8 @@ class LakeWorker:
                     self.flush_buffer()
                     counter = 0
 
-            # if we haven't received data we check for timeout for flushing the buffer.
-            elif (time.time() - last_received) > self.max_wait:
-                self.flush_buffer()
-                print("Flush database")
-                # reset counters so we flush at most every max_wait seconds.
-                last_received = time.time()
-                counter = 0
-
             # check if there is a message from the coordinator.
-            if socks.get(self.coordinator) == zmq.POLLIN:
+            if self.coordinator in socks and socks.get(self.coordinator) == zmq.POLLIN:
                 signal = self.coordinator.recv_string()
                 if signal == "PAUSE":
                     # flush the buffer then do nothing until restarted.
@@ -104,9 +96,17 @@ class LakeWorker:
                 elif signal == "KILL":
                     print("Killing process")
                     self.flush_buffer()
-                    self.add_indices()
+                    self.add_indices(timeout=10)
                     # exit the process.
                     exit(code=1)
+
+            # if we haven't received data we check for timeout for flushing the buffer.
+            if (time.time() - last_received) > self.max_wait:
+                self.flush_buffer()
+                print("Flush database")
+                # reset counters so we flush at most every max_wait seconds.
+                last_received = time.time()
+                counter = 0
 
     def flush_buffer(self) -> None:
         """
@@ -115,19 +115,28 @@ class LakeWorker:
         """
         for col, data in self.buffer.items():
             result = self.db[col].insert_many(data)
-            print("Inserted to database")
+            print("Inserted to database with result".format(result))
         self.buffer = dict()
 
-    def add_indices(self) -> None:
+    def add_indices(self, timeout: int) -> None:
         """
         Adds an index on the "total_minibatch" field to support analysis.
         Done before killing to minimise performance overhead. Does add time to killing.
+        :param timeout: time in seconds before timing out the operation TODO check is seconds.
         :return: None
         """
         print("Adding indices, please wait...")
         for col in self.collections:
             self.db[col].create_index([("total_minibatch", pymongo.DESCENDING)], background=True)
-        print("Indices added")
+
+            start = time.time()
+            while "total_minibatch_-1" not in self.db[col].index_information():
+                if (time.time() - start) > timeout:
+                    print("Timed out while adding indices")
+                    # return False
+
+            print("Indices added")
+            # return True
 
     def pause_work(self) -> None:
         # listen for a signal from the coordinator (blocking intentionally)
@@ -136,7 +145,7 @@ class LakeWorker:
             print("Restarting")
             self.work()
         elif signal == "KILL":
-            self.add_indices()
+            self.add_indices(10)
             # exit immediately as we have already flushed the buffer.
             exit(code=1)
 
@@ -214,7 +223,7 @@ class LakeCoordinator:
         self.worker_control.send_string("RESTART")
 
     def add_index(self, collection: str, key_and_order: tuple, filter_expression: dict,
-                  name: str) -> bool:
+                  name: str, timeout: int = 0) -> bool:
         """
         Adds a specified index to the database and returns whether it was successful or not.
         Side effect is that it pauses the reading of data.
@@ -222,6 +231,7 @@ class LakeCoordinator:
         :param key_and_order:
         :param filter_expression:
         :param name:
+        :param timeout: optional if specified gives a maximum time before restarting the lake.
         :return: bool True if successful False otherwise
         """
         # pause the workers and wait for them to flush.
@@ -231,13 +241,14 @@ class LakeCoordinator:
             # try to create the index
             db[collection].create_index(key_and_order, partialFilterExpression=filter_expression,
                                         name=name)
-            # check if it was created, restart regardless
-            if name not in db[collection].index_information():
-                self.restart_lake()
-                return False
-            else:
-                self.restart_lake()
-                return True
+            # check if it was created, restart after
+            start = time.time()
+            while name not in db[collection].index_information():
+                if (time.time() - start) > timeout:
+                    return False
+            # once added restart.
+            self.restart_lake()
+            return True
 
 
 def main():
