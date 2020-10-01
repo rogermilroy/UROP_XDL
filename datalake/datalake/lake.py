@@ -64,7 +64,7 @@ class LakeWorker:
         last_received = time.time()
         while True:
             # read the data (1 second timeout)
-            socks = dict(self.poller.poll(1000))\
+            socks = dict(self.poller.poll(1000))
 
             # check if there is a message for receiver.
             if self.receiver in socks and socks.get(self.receiver) == zmq.POLLIN:
@@ -119,8 +119,7 @@ class LakeWorker:
         :return: None
         """
         for col, data in self.buffer.items():
-            result = self.db[col].insert_many(data)
-            # print("Inserted to database with result".format(result))
+            self.db[col].insert_many(data)
 
         self.buffer = dict()
 
@@ -183,22 +182,18 @@ class LakeCoordinator:
         while True:
             try:
                 mess = self.worker_feedback.recv_string(flags=zmq.NOBLOCK)
-                # print(mess)
                 collections.add(mess)
             except:
                 break
 
         for col in collections:
-            print("adding total minibatch")
             self.add_index(collection=col, key_and_order=("total_minibatch", pymongo.DESCENDING),
                            filter_expression={"total_minibatch": {"$exists": True}},
                            name="total_minibatch",
                            timeout=100)
-            print("adding final model state")
             self.add_index(collection=col, key_and_order=("final_model_state", pymongo.ASCENDING),
                            filter_expression={"final_model_state": {"$exists": True}},
                            name="final_model_state")
-            print("all done")
 
         start_time = time.time()
         # allow some time to exit and check.
@@ -245,20 +240,15 @@ class LakeCoordinator:
         :param timeout: optional if specified gives a maximum time before restarting the lake.
         :return: bool True if successful False otherwise
         """
-        # pause the workers and wait for them to flush.
-        # self.pause_lake()
-        # time.sleep(1.)
         db = pymongo.MongoClient(self.db_conn_string).training_data
         # try to create the index
         db[collection].create_index([key_and_order], partialFilterExpression=filter_expression,
                                     name=name)
-        # check if it was created, restart after
+        # check if it was created
         start = time.time()
         while name not in db[collection].index_information():
             if (time.time() - start) > timeout:
                 return False
-        # once added restart.
-        # self.restart_lake()
         return True
 
 
