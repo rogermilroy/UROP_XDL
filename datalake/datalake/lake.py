@@ -7,12 +7,13 @@ import ujson as json
 import zmq
 
 
-def lake_worker(address: str, coordinator: str, db_conn_string: str, capacity: int,
+def lake_worker(address: str, coordinator: str, feedback: str, db_conn_string: str, capacity: int,
                 max_wait: float) -> None:
     """
     Wrapper script for Process target invocation. Creates and starts the LakeWorker.
     :param address: str The address of the zmq socket we are listening to.
     :param coordinator: str The connection string for the LakeCoordinator for signalling.
+    :param feedback: str The connection string to provide feedback to coordinator.
     :param db_conn_string: str The connection string of the MongoDB instance we are saving to.
     :param capacity: int The maximum number of data dicts we can buffer before saving to db.
     :param max_wait: float The maximum time in seconds to wait after the last data to flush the
@@ -20,13 +21,14 @@ def lake_worker(address: str, coordinator: str, db_conn_string: str, capacity: i
     :return: None.
     """
     worker = LakeWorker(address=address, coordinator=coordinator,
-                        db_conn_string=db_conn_string, capacity=capacity, max_wait=max_wait)
+                        db_conn_string=db_conn_string, capacity=capacity, max_wait=max_wait,
+                        feedback=feedback)
     worker.work()
 
 
 class LakeWorker:
 
-    def __init__(self, address: str, coordinator: str, db_conn_string: str,
+    def __init__(self, address: str, coordinator: str, feedback: str, db_conn_string: str,
                  capacity: int, max_wait: float) -> None:
         # Create zmq context.
         self.context = zmq.Context()
@@ -37,6 +39,8 @@ class LakeWorker:
         self.coordinator = self.context.socket(zmq.SUB)
         self.coordinator.connect('ipc://' + coordinator)
         self.coordinator.setsockopt(zmq.SUBSCRIBE, b'')  # subscribe to everything.
+        self.feedback = self.context.socket(zmq.PUB)
+        self.feedback.bind('ipc://' + feedback)
         # Create a poller and register the sockets.
         self.poller = zmq.Poller()
         self.poller.register(self.receiver, zmq.POLLIN)
@@ -76,6 +80,8 @@ class LakeWorker:
                 if col not in self.buffer:
                     self.buffer[col] = [data]
                     self.collections.append(col)
+                    # send the collection to coordinator for adding indices
+                    self.feedback.send_string(col)
                 else:
                     self.buffer[col].append(data)
                 # We have a limit to how much is stored in the buffer and once it is reached we send
@@ -96,7 +102,6 @@ class LakeWorker:
                 elif signal == "KILL":
                     print("Killing process")
                     self.flush_buffer()
-                    self.add_indices(timeout=10)
                     # exit the process.
                     exit(code=1)
 
@@ -115,28 +120,9 @@ class LakeWorker:
         """
         for col, data in self.buffer.items():
             result = self.db[col].insert_many(data)
-            print("Inserted to database with result".format(result))
+            # print("Inserted to database with result".format(result))
+
         self.buffer = dict()
-
-    def add_indices(self, timeout: int) -> None:
-        """
-        Adds an index on the "total_minibatch" field to support analysis.
-        Done before killing to minimise performance overhead. Does add time to killing.
-        :param timeout: time in seconds before timing out the operation TODO check is seconds.
-        :return: None
-        """
-        print("Adding indices, please wait...")
-        for col in self.collections:
-            self.db[col].create_index([("total_minibatch", pymongo.DESCENDING)], background=True)
-
-            start = time.time()
-            while "total_minibatch_-1" not in self.db[col].index_information():
-                if (time.time() - start) > timeout:
-                    print("Timed out while adding indices")
-                    # return False
-
-            print("Indices added")
-            # return True
 
     def pause_work(self) -> None:
         # listen for a signal from the coordinator (blocking intentionally)
@@ -145,7 +131,6 @@ class LakeWorker:
             print("Restarting")
             self.work()
         elif signal == "KILL":
-            self.add_indices(10)
             # exit immediately as we have already flushed the buffer.
             exit(code=1)
 
@@ -168,6 +153,8 @@ class LakeCoordinator:
         self.ipc_address = '/tmp/coordinate'
         self.worker_control = self.context.socket(zmq.PUB)
         self.worker_control.bind('ipc://' + self.ipc_address)
+        self.worker_feedback = self.context.socket(zmq.SUB)
+        self.worker_feedback.setsockopt(zmq.SUBSCRIBE, b'')  # subscribe to everything.
 
     def start_lake(self) -> None:
         """
@@ -176,11 +163,12 @@ class LakeCoordinator:
         """
         for i in range(self.max_processes):
             p = Process(target=lake_worker,
-                        args=(self.source_address, self.ipc_address, self.db_conn_string,
-                              self.process_capacity, self.max_wait),
+                        args=(self.source_address, self.ipc_address, self.ipc_address + '-' + str(i),
+                              self.db_conn_string, self.process_capacity, self.max_wait),
                         daemon=True)
             p.start()
             self.processes.append(p)
+            self.worker_feedback.connect('ipc://' + self.ipc_address + '-' + str(i))
 
     def end_lake(self, timeout: float = 5.) -> None:
         """
@@ -190,6 +178,28 @@ class LakeCoordinator:
         """
         # attempt to exit gracefully
         self.worker_control.send_string("KILL")
+        collections = set()
+        # read all the message.
+        while True:
+            try:
+                mess = self.worker_feedback.recv_string(flags=zmq.NOBLOCK)
+                # print(mess)
+                collections.add(mess)
+            except:
+                break
+
+        for col in collections:
+            print("adding total minibatch")
+            self.add_index(collection=col, key_and_order=("total_minibatch", pymongo.DESCENDING),
+                           filter_expression={"total_minibatch": {"$exists": True}},
+                           name="total_minibatch",
+                           timeout=100)
+            print("adding final model state")
+            self.add_index(collection=col, key_and_order=("final_model_state", pymongo.ASCENDING),
+                           filter_expression={"final_model_state": {"$exists": True}},
+                           name="final_model_state")
+            print("all done")
+
         start_time = time.time()
         # allow some time to exit and check.
         while time.time() - start_time < timeout:
@@ -204,6 +214,7 @@ class LakeCoordinator:
         for p in self.processes:
             p.terminate()
             p.join()
+
         # after all the processes have been terminated we empty the list of processes.
         print("We had to be less polite and terminate some processes.")
         self.processes = list()
@@ -223,7 +234,7 @@ class LakeCoordinator:
         self.worker_control.send_string("RESTART")
 
     def add_index(self, collection: str, key_and_order: tuple, filter_expression: dict,
-                  name: str, timeout: int = 0) -> bool:
+                  name: str, timeout: int = 10) -> bool:
         """
         Adds a specified index to the database and returns whether it was successful or not.
         Side effect is that it pauses the reading of data.
@@ -235,20 +246,20 @@ class LakeCoordinator:
         :return: bool True if successful False otherwise
         """
         # pause the workers and wait for them to flush.
-        self.pause_lake()
-        time.sleep(1.)
-        with pymongo.MongoClient(self.db_conn_string).training_data as db:
-            # try to create the index
-            db[collection].create_index(key_and_order, partialFilterExpression=filter_expression,
-                                        name=name)
-            # check if it was created, restart after
-            start = time.time()
-            while name not in db[collection].index_information():
-                if (time.time() - start) > timeout:
-                    return False
-            # once added restart.
-            self.restart_lake()
-            return True
+        # self.pause_lake()
+        # time.sleep(1.)
+        db = pymongo.MongoClient(self.db_conn_string).training_data
+        # try to create the index
+        db[collection].create_index([key_and_order], partialFilterExpression=filter_expression,
+                                    name=name)
+        # check if it was created, restart after
+        start = time.time()
+        while name not in db[collection].index_information():
+            if (time.time() - start) > timeout:
+                return False
+        # once added restart.
+        # self.restart_lake()
+        return True
 
 
 def main():
