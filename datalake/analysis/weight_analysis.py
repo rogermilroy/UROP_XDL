@@ -148,15 +148,7 @@ def analyse_decision(model, inputs, selection: str, analysis: str, n: int, db_co
     return diffs, relevances
 
 
-def visualise_differences(model, inputs, db, collection):
-    """
-    Visualise training.
-    :param model: The model that was trained. With final state weights loaded. IMPORTANT
-    :param inputs: The original inputs
-    :param db: The data base containing the training records.
-    :param collection: The collection containing the training records.
-    :return:
-    """
+def top_3_relevances(model, inputs):
 
     outs = torch.softmax(model.forward(inputs), dim=1)
 
@@ -168,6 +160,18 @@ def visualise_differences(model, inputs, db, collection):
 
     top3 = torch.topk(outs, k=3).indices
 
+    return relevances, top3
+
+
+def visualise_differences(model, db, collection):
+    """
+    Visualise training.
+    NOTE important side effect is that it changes the weights in the model.
+    :param model: The model that was trained. With final state weights loaded. IMPORTANT
+    :param db: The data base containing the training records.
+    :param collection: The collection containing the training records.
+    :return:
+    """
     # pull data from db
     items = db[collection].count_documents({'total_minibatch': {"$exists": True}},
                                            hint='total_minibatch_-1')
@@ -179,8 +183,6 @@ def visualise_differences(model, inputs, db, collection):
     diffs = dict()
     preds = list()
     targets = list()
-    tmp = torch.zeros_like(outs)  # TODO check
-    src = torch.ones_like(outs)
 
     # iterate over items
     for i in tqdm(range(items - 1)):
@@ -218,7 +220,7 @@ def visualise_differences(model, inputs, db, collection):
                                                torch.softmax(after, dim=1),
                                                decode_tensor(cursor[i]['targets']))
 
-    return diffs, top3, relevances, torch.cat(preds, dim=0).T, list(sorted(targets))
+    return diffs, torch.cat(preds, dim=0).T, list(sorted(targets))
 
 
 if __name__ == '__main__':
@@ -257,4 +259,3 @@ if __name__ == '__main__':
                       relevances=relevances[-1].detach().numpy().reshape(28, -1),
                       pos_neg=False)
     plotter.plot()
-

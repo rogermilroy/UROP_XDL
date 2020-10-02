@@ -7,13 +7,13 @@ import pymongo
 import torch
 import ujson as json
 import zmq
-from analysis.weight_analysis import analyse_decision, visualise_differences
+from analysis.weight_analysis import analyse_decision, visualise_differences, top_3_relevances
 from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet, TestDeepCNN
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 from utils.data_processing import decode_model_state, encode_tensor, encode_diffs, \
-    encode_relevance, decode_relevance, decode_diffs, \
+    decode_diffs, \
     decode_tensor
 from utils.network_details import get_ip
 from visualisation.plot import CNNPlotter
@@ -37,7 +37,7 @@ def temporary_analysis(selection: str, analysis: str, n: int, training_run: str)
     model = TestFeedforwardNet()
     model.load_state_dict(model_state)
     transform = ToTensor()
-    dataset = MNIST('.', download=True, transform=transform)
+    dataset = MNIST('../../MNIST/original', download=False, transform=transform)
 
     batch_size = 1
 
@@ -76,10 +76,11 @@ def temporary_analysis(selection: str, analysis: str, n: int, training_run: str)
 
 
 def analyse_and_store(model, db: pymongo.MongoClient, source_collection: str,
-                      example_index: int, sample: torch.Tensor, label: torch.Tensor,
+                      sample: torch.Tensor, label: torch.Tensor,
                       outs: torch.Tensor) -> None:
     """
     Method to run an analysis and store in a local MongoDB.
+    NOTE important side effect is that it changes the weights in the model
     :param model: The model with the final state weights loaded
     :param db: The MongoDB client instance
     :param source_collection: The collection with the model states from training.
@@ -90,38 +91,36 @@ def analyse_and_store(model, db: pymongo.MongoClient, source_collection: str,
     :return: None
     """
 
-    diffs, top3, relevances, preds, targets = visualise_differences(model, sample,
-                                                                    db, source_collection)
+    diffs, preds, targets = visualise_differences(model=model, db=db, collection=source_collection)
 
-    analysis = {"example_index": example_index,  #TODO verify if this or one in put necessary.
-                "training_preds": encode_tensor(preds),
+    analysis = {"training_preds": encode_tensor(preds),
                 "training_targets": targets,
                 "vis_data": encode_diffs(diffs),  # dict of tensors ish
-                "top3": encode_tensor(top3),
-                "relevances": encode_relevance(relevances),  # list of tensors
                 "preds": encode_tensor(outs),
                 "target": encode_tensor(label)}
 
     analysis_gridfs = gridfs.GridFS(database=db, collection=source_collection+'_analyses')
 
-    analysis_gridfs.put(json.dumps(analysis), encoding='utf-8', example_analysed=example_index)
+    analysis_gridfs.put(json.dumps(analysis), encoding='utf-8', analysis_type='visualise_diffs')
 
 
-def visualise_analysis(db, collection, analysis_index):
+def visualise_analysis(model, sample, db, collection: str, analysis_type: str):
+
+    relevances, top3 = top_3_relevances(model, sample)
 
     analysis_gridfs = gridfs.GridFS(database=db, collection=collection)
 
-    b = analysis_gridfs.find_one({'example_analysed': analysis_index})
+    b = analysis_gridfs.find_one({'analysis_type': analysis_type})
     b = json.loads(str(b.read(), encoding='utf-8'))
 
     plotter = CNNPlotter(training_preds=decode_tensor(b['training_preds']).numpy(),
                          training_targets=b['training_targets'],
                          vis_data=decode_diffs(b['vis_data']),
-                         top3=decode_tensor(b['top3']),
-                         relevances=decode_relevance(b['relevances']),
+                         top3=top3,
+                         relevances=relevances,
                          preds=decode_tensor(b['preds']),
                          target=decode_tensor(b['target']),
-                         color_map='cool_warm')
+                         color_map='coolwarm')
     plotter.plot()
 
 
@@ -140,15 +139,15 @@ if __name__ == '__main__':
 
     sample, lab = dataset[24]
 
-    visualise_analysis(db=db, collection='conv_full0_analyses', analysis_index=24)
+    sample = sample.unsqueeze(0)
 
-    # sample = sample.unsqueeze(0)
-    #
+    visualise_analysis(model=model, sample=sample, db=db, collection='conv_full0_analyses',
+                       analysis_type="visualise_diffs")
+
     # outs = torch.softmax(model.forward(sample), dim=1)
     #
     # analyse_and_store(model=model, db=db, source_collection='conv_full0',
-    #                   example_index=24, sample=sample,
-    #                   label=lab, outs=outs)
+    #                   sample=sample, label=lab, outs=outs)
 
     # temporary_analysis("band", "pos_neg", 3, "test_network1")
     # temporary_analysis("band", "avg", 3, "test_network1")
