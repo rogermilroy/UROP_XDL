@@ -122,29 +122,28 @@ def decode_relevances(encoded_relevances: List[List[dict]]) -> List[List[Tensor]
 
 
 def encode_diffs(diffs: Dict[int, Tuple[List[Tensor], List[Tensor], Tensor, Tensor, Tensor,
-                                        Tensor, Tensor]]) -> \
-        Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict, dict]]:
+                                        Tensor]]) -> \
+        Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict]]:
     """
     Encodes diff list for storage in Mongo.
     :param diffs:
     :return:
     """
     encoded_diffs = dict()
-    for key, (rel0, rel1, top3_before, top3_after, outs_before, outs_after, targets) in diffs.items():
+    for key, (rel0, rel1, top3_before, top3_after, outs_before, outs_after) in diffs.items():
         encoded_diffs[str(key)] = (
             encode_relevance(rel0),
             encode_relevance(rel1),
             encode_tensor(top3_before),
             encode_tensor(top3_after),
             encode_tensor(outs_before),
-            encode_tensor(outs_after),
-            encode_tensor(targets)
+            encode_tensor(outs_after)
         )
     return encoded_diffs
 
 
-def decode_diffs(diffs: Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict, dict]]) -> \
-        Dict[int, Tuple[List[Tensor], List[Tensor], Tensor, Tensor, Tensor, Tensor, Tensor]]:
+def decode_diffs(diffs: Dict[str, Tuple[List[dict], List[dict], dict, dict, dict, dict]]) -> \
+        Dict[int, Tuple[List[Tensor], List[Tensor], Tensor, Tensor, Tensor, Tensor]]:
     """
     Encodes diff list for storage in Mongo.
     :param diffs:
@@ -152,14 +151,13 @@ def decode_diffs(diffs: Dict[str, Tuple[List[dict], List[dict], dict, dict, dict
     """
     decoded_diffs = dict()
     for key, (
-    rel0, rel1, top3_before, top3_after, outs_before, outs_after, targets) in diffs.items():
+    rel0, rel1, top3_before, top3_after, outs_before, outs_after) in diffs.items():
         decoded_diffs[int(key)] = (
             decode_relevance(rel0),
             decode_relevance(rel1),
             decode_tensor(top3_before),
             decode_tensor(top3_after),
             decode_tensor(outs_before),
-            decode_tensor(outs_after),
-            decode_tensor(targets)
+            decode_tensor(outs_after)
         )
     return decoded_diffs
