@@ -12,9 +12,9 @@ from testing.test_dataloaders import create_split_loaders
 from testing.test_network import TestFeedforwardNet, TestDeepCNN
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
+from tqdm import tqdm
 from utils.data_processing import decode_model_state, encode_tensor, encode_diffs, \
-    decode_diffs, \
-    decode_tensor
+    decode_diffs, decode_tensor, relevance_to_list, tensor_to_list
 from utils.network_details import get_ip
 from visualisation.plot import CNNPlotter
 
@@ -76,8 +76,7 @@ def temporary_analysis(selection: str, analysis: str, n: int, training_run: str)
 
 
 def analyse_and_store(model, db: pymongo.MongoClient, source_collection: str,
-                      sample: torch.Tensor, label: torch.Tensor,
-                      outs: torch.Tensor) -> None:
+                      label: torch.Tensor, outs: torch.Tensor) -> None:
     """
     Method to run an analysis and store in a local MongoDB.
     NOTE important side effect is that it changes the weights in the model
@@ -124,6 +123,28 @@ def visualise_analysis(model, sample, db, collection: str, analysis_type: str):
     plotter.plot()
 
 
+def convert_for_web(db, source_collection, sink_collection, analysis_type):
+
+    grid = gridfs.GridFS(database=db, collection=source_collection)
+
+    source_data = grid.find_one({'analysis_type': analysis_type})
+    source_data = decode_diffs(json.loads(str(source_data.read(), encoding='utf-8'))['vis_data'])
+
+    for minibatch, (rel0, rel1, top_3_prior, top_3_post, outs_prior, outs_post) \
+            in tqdm(source_data.items()):
+        db[sink_collection].insert({
+            'minibatch': minibatch,
+            'data': [
+                relevance_to_list(rel0),
+                relevance_to_list(rel1),
+                tensor_to_list(top_3_prior),
+                tensor_to_list(top_3_post),
+                tensor_to_list(outs_prior),
+                tensor_to_list(outs_post)
+            ]
+        })
+
+
 if __name__ == '__main__':
 
     model = TestDeepCNN()
@@ -141,13 +162,18 @@ if __name__ == '__main__':
 
     sample = sample.unsqueeze(0)
 
-    visualise_analysis(model=model, sample=sample, db=db, collection='conv_full0_analyses',
-                       analysis_type="visualise_diffs")
+    # visualise_analysis(model=model, sample=sample, db=db, collection='conv_full0_analyses',
+    #                    analysis_type="visualise_diffs")
 
     # outs = torch.softmax(model.forward(sample), dim=1)
     #
     # analyse_and_store(model=model, db=db, source_collection='conv_full0',
-    #                   sample=sample, label=lab, outs=outs)
+    #                   label=lab, outs=outs)
+
+    convert_for_web(db=db, source_collection='conv_full0_analyses',
+                    sink_collection='conv_full0_web', analysis_type='visualise_diffs')
+
+
 
     # temporary_analysis("band", "pos_neg", 3, "test_network1")
     # temporary_analysis("band", "avg", 3, "test_network1")

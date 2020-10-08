@@ -150,8 +150,7 @@ def decode_diffs(diffs: Dict[str, Tuple[List[dict], List[dict], dict, dict, dict
     :return:
     """
     decoded_diffs = dict()
-    for key, (
-    rel0, rel1, top3_before, top3_after, outs_before, outs_after) in diffs.items():
+    for key, (rel0, rel1, top3_before, top3_after, outs_before, outs_after) in diffs.items():
         decoded_diffs[int(key)] = (
             decode_relevance(rel0),
             decode_relevance(rel1),
@@ -161,3 +160,32 @@ def decode_diffs(diffs: Dict[str, Tuple[List[dict], List[dict], dict, dict, dict
             decode_tensor(outs_after)
         )
     return decoded_diffs
+
+
+def relevance_to_list(relevance: List[Tensor]) -> List[List[List[float]]]:
+    """
+    Encodes relevance list (layers for one relevance)
+    :param relevance:
+    :return:
+    """
+    encoded_relevance = list()
+    for layer in relevance:
+        encoded_relevance.append(layer.numpy().tolist())
+    return encoded_relevance
+
+
+def tensor_to_list(tensor: Tensor) -> List[float]:
+    """
+    Utility for converting Torch Tensors to dict's for encoding to JSON.
+    :param tensor: Torch Tensor.
+    :return: dict containing tensor data and metadata.
+    """
+    if not isinstance(tensor, Tensor):
+        raise TypeError("Must be a Torch.Tensor.")
+    if tensor.requires_grad:
+        tensor = tensor.detach()
+    if tensor.device == torch.device("cuda"):
+        tensor.cpu()
+    if str(tensor.layout) == "torch.sparse_coo":
+        tensor = tensor.to_dense()
+    return tensor.numpy().tolist()
