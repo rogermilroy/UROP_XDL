@@ -217,8 +217,7 @@ def visualise_differences(model, db, collection):
                                                    dim=1), k=3).indices,
                                                torch.topk(torch.softmax(after, dim=1), k=3).indices,
                                                decode_tensor(cursor[i]['outputs']),
-                                               torch.softmax(after, dim=1),
-                                               decode_tensor(cursor[i]['targets']))
+                                               torch.softmax(after, dim=1))
 
     return diffs, torch.cat(preds, dim=0).T, list(sorted(targets))
 
